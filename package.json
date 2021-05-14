@@ -1,0 +1,6 @@
+{
+	"description": "nrfxlib is a repository that contains RTOS-independent libraries and modules to be used with Nordic Semiconductor SoCs",
+	"name": "framework-nrfconnect-nrfxlib",
+	"url": "http://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrfxlib/README.html",
+	"version": "v1.5.1"
+}
