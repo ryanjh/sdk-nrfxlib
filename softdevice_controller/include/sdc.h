@@ -25,9 +25,9 @@ extern "C" {
 
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "nrf.h"
 #include "nrf_errno.h"
-
 
 /** @brief Default resource configuration tag. */
 #define SDC_DEFAULT_RESOURCE_CFG_TAG  0
@@ -42,11 +42,11 @@ extern "C" {
  * to periodic advertisers. */
 #define SDC_DEFAULT_PERIODIC_SYNC_COUNT 0
 
-/** @brief Default maximum number of concurrent slave links. */
-#define SDC_DEFAULT_SLAVE_COUNT   1
+/** @brief Default maximum number of concurrent peripheral links. */
+#define SDC_DEFAULT_PERIPHERAL_COUNT   1
 
-/** @brief Default maximum number of concurrent master links. */
-#define SDC_DEFAULT_MASTER_COUNT  1
+/** @brief Default maximum number of concurrent central links. */
+#define SDC_DEFAULT_CENTRAL_COUNT  1
 
 /** @brief Default maximum Link Layer TX packet size. */
 #define SDC_DEFAULT_TX_PACKET_SIZE 27
@@ -100,8 +100,8 @@ extern "C" {
  */
 
 /** @brief Auxiliary defines, not to be used outside of this file. */
-#define __MEM_DEFAULT_MASTER_LINK_SIZE 846
-#define __MEM_DEFAULT_SLAVE_LINK_SIZE 910
+#define __MEM_DEFAULT_CENTRAL_LINK_SIZE 846
+#define __MEM_DEFAULT_PERIPHERAL_LINK_SIZE 934
 #define __MEM_BUFFER_OVERHEAD_SIZE 7
 #define __MEM_ADDITIONAL_LINK_SIZE(tx_size, rx_size, tx_count, rx_count) \
     ((tx_count) * (tx_size - SDC_DEFAULT_TX_PACKET_SIZE) + \
@@ -111,33 +111,33 @@ extern "C" {
      (rx_count - SDC_DEFAULT_RX_PACKET_COUNT) * \
         (__MEM_BUFFER_OVERHEAD_SIZE + SDC_DEFAULT_RX_PACKET_SIZE))
 
-/** @brief Maximum memory required per master link.
+/** @brief Maximum memory required per central link.
  *
  * @param[in] tx_size Link Layer TX packet size.
  * @param[in] rx_size Link Layer RX packet size.
  * @param[in] tx_count Link Layer TX packet count.
  * @param[in] rx_count Link Layer RX packet count.
  */
-#define SDC_MEM_PER_MASTER_LINK(tx_size, rx_size, tx_count, rx_count) \
-    (__MEM_DEFAULT_MASTER_LINK_SIZE + \
+#define SDC_MEM_PER_CENTRAL_LINK(tx_size, rx_size, tx_count, rx_count) \
+    (__MEM_DEFAULT_CENTRAL_LINK_SIZE + \
      __MEM_ADDITIONAL_LINK_SIZE(tx_size, rx_size, tx_count, rx_count))
 
-/** @brief Maximum memory required per slave link.
+/** @brief Maximum memory required per peripheral link.
  *
  * @param[in] tx_size Link Layer TX packet size.
  * @param[in] rx_size Link Layer RX packet size.
  * @param[in] tx_count Link Layer TX packet count.
  * @param[in] rx_count Link Layer RX packet count.
  */
-#define SDC_MEM_PER_SLAVE_LINK(tx_size, rx_size, tx_count, rx_count) \
-    (__MEM_DEFAULT_SLAVE_LINK_SIZE + \
+#define SDC_MEM_PER_PERIPHERAL_LINK(tx_size, rx_size, tx_count, rx_count) \
+    (__MEM_DEFAULT_PERIPHERAL_LINK_SIZE + \
      __MEM_ADDITIONAL_LINK_SIZE(tx_size, rx_size, tx_count, rx_count))
 
-/** Maximum shared memory required for master links. */
-#define SDC_MEM_MASTER_LINKS_SHARED 24
+/** Maximum shared memory required for central links. */
+#define SDC_MEM_CENTRAL_LINKS_SHARED 24
 
-/** Maximum shared memory required for slave links. */
-#define SDC_MEM_SLAVE_LINKS_SHARED  24
+/** Maximum shared memory required for peripheral links. */
+#define SDC_MEM_PERIPHERAL_LINKS_SHARED  24
 
 /** Memory required for scanner buffers when only supporting legacy scanning. */
 #define SDC_MEM_SCAN_BUFFER(buffer_count) (75 + (buffer_count) * 71)
@@ -146,8 +146,8 @@ extern "C" {
 #define SDC_MEM_SCAN_BUFFER_EXT(buffer_count) (40 + (buffer_count) * 290)
 
 /** @brief Auxiliary defines, not to be used outside of this file. */
-#define __MEM_PER_ADV_SET_LOW(max_adv_data) ((4109+(max_adv_data)*18)/10)
-#define __MEM_PER_ADV_SET_HIGH(max_adv_data) (598+(max_adv_data))
+#define __MEM_PER_ADV_SET_LOW(max_adv_data) ((4269+(max_adv_data)*18)/10)
+#define __MEM_PER_ADV_SET_HIGH(max_adv_data) (614+(max_adv_data))
 #define __MEM_PER_PERIODIC_ADV_SET_LOW(max_adv_data) ((2258+(max_adv_data)*18)/10)
 #define __MEM_PER_PERIODIC_ADV_SET_HIGH(max_adv_data) (417+(max_adv_data))
 
@@ -173,13 +173,13 @@ extern "C" {
  *
  * @param[in] buffer_count The number of periodic synchronization receive buffers.
  */
-#define SDC_MEM_PER_PERIODIC_SYNC(buffer_count) (168 + 264 * (buffer_count))
+#define SDC_MEM_PER_PERIODIC_SYNC(buffer_count) (168 + (buffer_count) * 264)
 
 /** Memory required for the periodic adv list.
  *
  * @param[in] list_size The number of entries the list can fit.
  */
-#define SDC_MEM_PERIODIC_ADV_LIST(list_size) (8 * (list_size))
+#define SDC_MEM_PERIODIC_ADV_LIST(list_size) ((list_size) * 8)
 
 /** @} end of sdc_mem_defines */
 
@@ -206,14 +206,14 @@ enum sdc_cfg_type
 {
     /** No configuration update. */
     SDC_CFG_TYPE_NONE         = 0,
-    /** Maximum number of concurrent master roles.
-     *  See also @ref sdc_cfg_t::master_count.
+    /** Maximum number of concurrent central roles.
+     *  See also @ref sdc_cfg_t::central_count.
      */
-    SDC_CFG_TYPE_MASTER_COUNT = 1,
-    /** Maximum number of concurrent slave roles.
-     *  See also @ref sdc_cfg_t::slave_count.
+    SDC_CFG_TYPE_CENTRAL_COUNT = 1,
+    /** Maximum number of concurrent peripheral roles.
+     *  See also @ref sdc_cfg_t::peripheral_count.
      */
-    SDC_CFG_TYPE_SLAVE_COUNT  = 2,
+    SDC_CFG_TYPE_PERIPHERAL_COUNT  = 2,
     /** Buffer configuration per connection.
      *  See also @ref sdc_cfg_t::buffer_cfg.
      */
@@ -301,18 +301,17 @@ typedef struct
     uint16_t max_adv_data;
 } sdc_cfg_adv_buffer_cfg_t;
 
-
 /** @brief SoftDevice Controller configuration.  */
 typedef union
 {
-    /** Max number of concurrent master connections.
-     *  Default: @ref SDC_DEFAULT_MASTER_COUNT.
+    /** Max number of concurrent central connections.
+     *  Default: @ref SDC_DEFAULT_CENTRAL_COUNT.
      */
-    sdc_cfg_role_count_t   master_count;
-    /** Max number of concurrent slave connections.
-     *  Default: @ref SDC_DEFAULT_SLAVE_COUNT.
+    sdc_cfg_role_count_t   central_count;
+    /** Max number of concurrent peripheral connections.
+     *  Default: @ref SDC_DEFAULT_PERIPHERAL_COUNT.
      */
-    sdc_cfg_role_count_t   slave_count;
+    sdc_cfg_role_count_t   peripheral_count;
     /** Configures the number and size of the data buffers available per link.
      *  Default: See @ref sdc_cfg_buffer_cfg_t.
      */
@@ -371,6 +370,7 @@ typedef union
      * Default: @ref SDC_DEFAULT_PERIODIC_ADV_LIST_SIZE.
      */
     uint8_t periodic_adv_list_size;
+
 } sdc_cfg_t;
 
 
@@ -468,7 +468,7 @@ int32_t sdc_build_revision_get(uint8_t * p_build_revision);
  * After this API is called, the controller will support the HCI commands
  * and events related to the Advertising State.
  * Only non-connectable advertising is supported. To support connectable
- * advertising, call @ref sdc_support_slave().
+ * advertising, call @ref sdc_support_peripheral().
  *
  * @retval 0                Success
  * @retval -NRF_EPERM       This API must be called before @ref sdc_cfg_set() or @ref sdc_enable().
@@ -490,10 +490,10 @@ int32_t sdc_support_adv(void);
  */
 int32_t sdc_support_ext_adv(void);
 
-/** @brief Support Slave role
+/** @brief Support Peripheral role
  *
  * After this API is called, the controller will support the HCI commands
- * and events related to the slave role.
+ * and events related to the peripheral role.
  *
  * The application shall call either @ref sdc_support_adv() or
  * @ref sdc_support_ext_adv() to be able to support connection
@@ -501,9 +501,9 @@ int32_t sdc_support_ext_adv(void);
  *
  * @retval 0                Success
  * @retval -NRF_EPERM       This API must be called before @ref sdc_cfg_set() or @ref sdc_enable().
- * @retval -NRF_EOPNOTSUPP  Slave role is not supported.
+ * @retval -NRF_EOPNOTSUPP  Peripheral role is not supported.
  */
-int32_t sdc_support_slave(void);
+int32_t sdc_support_peripheral(void);
 
 /** @brief Support Scanning state
  *
@@ -514,7 +514,7 @@ int32_t sdc_support_slave(void);
  * not call both @ref sdc_support_scan() and @ref sdc_support_ext_scan().
  *
  * This API shall not be called together with
- * @ref sdc_support_master() or @ref sdc_support_ext_master().
+ * @ref sdc_support_central() or @ref sdc_support_ext_central().
  *
  * @retval 0                Success
  * @retval -NRF_EPERM       This API must be called before @ref sdc_cfg_set() or @ref sdc_enable().
@@ -531,7 +531,7 @@ int32_t sdc_support_scan(void);
  * not call both @ref sdc_support_scan() and @ref sdc_support_ext_scan().
  *
  * This API shall not be called together with
- * @ref sdc_support_master() or @ref sdc_support_ext_master().
+ * @ref sdc_support_central() or @ref sdc_support_ext_central().
  *
  * @retval 0                Success
  * @retval -NRF_EPERM       This API must be called before @ref sdc_cfg_set() or @ref sdc_enable().
@@ -539,13 +539,13 @@ int32_t sdc_support_scan(void);
  */
 int32_t sdc_support_ext_scan(void);
 
-/** @brief Support Scanner, Initiator, and Master role
+/** @brief Support Scanner, Initiator, and Central role
  *
  * After this API is called, the controller will support the HCI commands
- * and events related to the scanner, initiator, and master role.
+ * and events related to the scanner, initiator, and central role.
  *
  * To reduce the size of the final linked image, the application should
- * not call both @ref sdc_support_master() and @ref sdc_support_ext_master().
+ * not call both @ref sdc_support_central() and @ref sdc_support_ext_central().
  *
  * This API shall not be called together with
  * @ref sdc_support_scan() or @ref sdc_support_ext_scan().
@@ -554,15 +554,15 @@ int32_t sdc_support_ext_scan(void);
  * @retval -NRF_EPERM       This API must be called before @ref sdc_cfg_set() or @ref sdc_enable().
  * @retval -NRF_EOPNOTSUPP  These features are not supported.
  */
-int32_t sdc_support_master(void);
+int32_t sdc_support_central(void);
 
-/** @brief Support Extended Scanner, Extended Initiator, and Master role
+/** @brief Support Extended Scanner, Extended Initiator, and Central role
  *
  * After this API is called, the controller will support the HCI commands
- * and events related to the extended scanner, initiator, and master role.
+ * and events related to the extended scanner, initiator, and central role.
  *
  * To reduce the size of the final linked image, the application should
- * not call both @ref sdc_support_master() and @ref sdc_support_ext_master().
+ * not call both @ref sdc_support_central() and @ref sdc_support_ext_central().
  *
  * This API shall not be called together with
  * @ref sdc_support_scan() or @ref sdc_support_ext_scan().
@@ -571,7 +571,7 @@ int32_t sdc_support_master(void);
  * @retval -NRF_EPERM       This API must be called before @ref sdc_cfg_set() or @ref sdc_enable().
  * @retval -NRF_EOPNOTSUPP  These features are not supported.
  */
-int32_t sdc_support_ext_master(void);
+int32_t sdc_support_ext_central(void);
 
 /** @brief Support Data Length Extensions
  *
@@ -620,6 +620,8 @@ int32_t sdc_support_le_coded_phy(void);
  * The application shall also call @ref sdc_support_ext_adv() to enable
  * support for extended advertising before enabling support for periodic advertising.
  *
+ * @note This API also enables support for ADI in periodic advertising packets.
+ *
  * @retval 0                Success
  * @retval -NRF_EPERM       This API must be called before @ref sdc_cfg_set() or @ref sdc_enable().
  * @retval -NRF_EOPNOTSUPP  LE Periodic advertising is not supported.
@@ -640,6 +642,25 @@ int32_t sdc_support_le_periodic_adv(void);
  * @retval -NRF_EOPNOTSUPP  LE Periodic advertising is not supported.
  */
 int32_t sdc_support_le_periodic_sync(void);
+
+/** @brief Configure the coex advertising mode
+ *
+ * Configure how the advertiser behaves on denial of an advertising packet.
+ * The advertiser can be configured to carry on with the advertisement after the denial or
+ * to abort the advertising event, once an advertising packet gets denied.
+ *
+ * The default behavior is that the advertiser tries to carry on with the advertising event
+ * after the denial.
+ *
+ * @note Setting @p adv_cont_on_denial to True is not supported for the
+ *       @ref MPSL_COEX_1WIRE_GPIOTE_ID coex interface type.
+ *       Using the @ref MPSL_COEX_1WIRE_GPIOTE_ID coex interface without using this
+ *       API call with @p adv_cont_on_denial set to False will result in unexpected behavior.
+ *
+ * @retval 0                Success
+ * @retval -NRF_EOPNOTSUPP  The coexistence feature is not supported.
+ */
+int32_t sdc_coex_adv_mode_configure(bool adv_cont_on_denial);
 
 #ifdef __cplusplus
 }
