@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 - 2020 Nordic Semiconductor ASA
+ * Copyright (c) Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
@@ -53,7 +53,7 @@ extern "C" {
 #define MPSL_TIMESLOT_EXTENSION_MARGIN_MIN_US          (87UL)
 
 /** @brief Size of a single timeslot context. */
-#define MPSL_TIMESLOT_CONTEXT_SIZE                     (36)
+#define MPSL_TIMESLOT_CONTEXT_SIZE                     (48)
 
 /** @brief Maximum number of timeslot sessions. */
 #define MPSL_TIMESLOT_CONTEXT_COUNT_MAX                (8)

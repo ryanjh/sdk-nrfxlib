@@ -12,11 +12,18 @@ Main branch
 
 All the notable changes included in the main branch are documented in this section.
 
+Added
+=====
+
+* Added support for changing PA gain during runtime through MODE pin switching for the nRF21540 GPIO front-end module.
+
 Changes
 =======
 
 * Removed support for running MPSL on the nRF5340 PDK (DRGN-15174).
 * Timeslot API values ``MPSL_TIMESLOT_DISTANCE_MAX_US`` and ``MPSL_TIMESLOT_EARLIEST_TIMEOUT_MAX_US`` increased to 256 seconds (DRGN-16800).
+* Extended  :c:struct:`mpsl_fem_nrf21540_gpio_interface_config_t` with :c:member:`mpsl_fem_nrf21540_gpio_interface_config_t.mode_pin_config`
+  and :c:member:`mpsl_fem_nrf21540_gpio_interface_config_t.fem_config.pa_gains_db`
 
 Bug fixes
 =========
@@ -25,6 +32,7 @@ Bug fixes
 * Fixed an issue where :c:func:`mpsl_init` would reject a certain clock configuration for no longer applicable legacy reasons (DRGN-16884).
 * Fixed an issue where MPSL could assert when radio notifications on ACTIVE (:c:enumerator:`MPSL_RADIO_NOTIFICATION_TYPE_INT_ON_ACTIVE` or :c:enumerator:`MPSL_RADIO_NOTIFICATION_TYPE_INT_ON_BOTH`) were used (DRGN-16642).
 * Fixed an issue where :c:func:`mpsl_uninit` would hang indefinitely when the RC oscillator was used as the Low Frequency Clock source (DRGN-16515).
+* Fixed an issue where the High Frequency Clock would stay active if it was turned on between timing events. This could occur during Low Frequency Clock calibration when using the RC oscillator as the Low Frequency Clock source (DRGN-17014).
 
 nRF Connect SDK v1.9.0
 **********************
