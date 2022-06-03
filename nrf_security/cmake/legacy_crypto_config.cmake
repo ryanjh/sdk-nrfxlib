@@ -98,6 +98,11 @@ kconfig_check_and_set_base(MBEDTLS_PK_WRITE_C)
 
 kconfig_check_and_set_base(MBEDTLS_PSA_CRYPTO_SPM)
 
+# PSA is not to be enabled for SPM builds
+if (NOT CONFIG_SPM)
+  kconfig_check_and_set_base(MBEDTLS_PSA_CRYPTO_C)
+endif()
+
 kconfig_check_and_set_base_to_one(MBEDTLS_PLATFORM_EXIT_ALT)
 kconfig_check_and_set_base_to_one(MBEDTLS_PLATFORM_FPRINTF_ALT)
 kconfig_check_and_set_base_to_one(MBEDTLS_PLATFORM_PRINTF_ALT)
@@ -115,6 +120,7 @@ kconfig_check_and_set_base(MBEDTLS_X509_CRL_PARSE_C)
 kconfig_check_and_set_base(MBEDTLS_X509_CRT_PARSE_C)
 kconfig_check_and_set_base(MBEDTLS_X509_CSR_PARSE_C)
 kconfig_check_and_set_base(MBEDTLS_X509_CSR_WRITE_C)
+kconfig_check_and_set_base(MBEDTLS_X509_REMOVE_INFO)
 
 kconfig_check_and_set_base(MBEDTLS_SSL_CLI_C)
 kconfig_check_and_set_base(MBEDTLS_SSL_SRV_C)
@@ -147,6 +153,7 @@ kconfig_check_and_set_base(MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG)
 kconfig_check_and_set_base_int(MBEDTLS_SSL_OUT_CONTENT_LEN)
 kconfig_check_and_set_base_int(MBEDTLS_SSL_IN_CONTENT_LEN)
 kconfig_check_and_set_base_int(MBEDTLS_ENTROPY_MAX_SOURCES)
+kconfig_check_and_set_base_int(MBEDTLS_MPI_MAX_SIZE)
 
 # Set all enabled TLS/DTLS key exchange methods
 kconfig_check_and_set_base(MBEDTLS_KEY_EXCHANGE_PSK_ENABLED)

@@ -254,6 +254,11 @@ config OBERON_ONLY_ENABLED
 
 menu "Legacy mbed TLS crypto APIs"
 
+config MBEDTLS_MPI_MAX_SIZE
+	int
+	default 256 if CRYPTOCELL_CC310_USABLE || !CRYPTOCELL_USABLE
+	default 384 if CRYPTOCELL_CC312_USABLE
+
 config MBEDTLS_LEGACY_CRYPTO_C
 	bool
 	prompt "Enable (legacy) mbed TLS crypto APIs"
@@ -354,6 +359,16 @@ config MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG
 	  Convenience layer for handling entropy before it is fully supported in
 	  PSA Crypto APIs and drivers. This is set by default for legacy and PSA 
 	  modes.
+
+config MBEDTLS_ENTROPY_C
+	bool
+	prompt "Entropy gathering"
+	depends on !MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG
+	default y if !CRYPTOCELL_USABLE
+	help
+	  Enable this setting to build entropy APIs usable to gather entropy
+	  form external sources. Only in use for devices that doesn't have 
+	  CryptoCell.
 
 endif # NRF_SECURITY_RNG
 

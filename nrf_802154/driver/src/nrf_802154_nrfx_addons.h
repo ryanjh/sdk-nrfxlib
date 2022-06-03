@@ -32,14 +32,43 @@
  *
  */
 
-#include "nrf.h"
+#ifndef NRF_802154_NRFX_ADDONS_H__
+#define NRF_802154_NRFX_ADDONS_H__
 
-#if defined (NRF52840_XXAA) || defined(NRF52811_XXAA) || defined(NRF5340_XXAA_NETWORK)
-#define ED_MIN_DBM       (-92) ///< dBm value corresponding to value 0 in the EDSAMPLE register.
-#define ED_RESULT_FACTOR 4     ///< Factor needed to calculate the ED result based on the data from the RADIO peripheral.
-#elif defined (NRF52833_XXAA) || defined(NRF52820_XXAA)
-#define ED_MIN_DBM       (-93) ///< dBm value corresponding to value 0 in the EDSAMPLE register.
-#define ED_RESULT_FACTOR 5     ///< Factor needed to calculate the ED result based on the data from the RADIO peripheral.
+#include "nrf.h"
+#include "nrf_802154_const.h"
+
+/* The usage of ED_RSSISCALE is described inprecisely in the nRF product specifications. The meaning of
+   this constant is the following: If we calculate ed_scaled =  EDSAMPLE *  ED_RSSISCALE, then
+   it is guaranteed that in the range 0-255 ed_scaled maps linearly to the ED power in dBm. This means,
+   that the maximum value in EDSAMPLE which can be reported in compliance with the 802.15.4 specification is
+   255/ED_RSSISCALE. */
+
+#if defined (NRF52840_XXAA) || defined(NRF52811_XXAA)
+#define ED_RSSIOFFS  (-92) ///< dBm value corresponding to value 0 in the EDSAMPLE register.
+#define ED_RSSISCALE 4     ///< Factor needed to calculate the ED result based on the data from the RADIO peripheral.
+#elif defined (NRF52833_XXAA) || defined(NRF52820_XXAA) || defined(NRF5340_XXAA)
+#define ED_RSSIOFFS  (-93) ///< dBm value corresponding to value 0 in the EDSAMPLE register.
+#define ED_RSSISCALE 5     ///< Factor needed to calculate the ED result based on the data from the RADIO peripheral.
 #else
 #error "Selected chip is not supported."
 #endif
+
+#define EDSAMPLE_MIN_REPORTED_VALUE (PHY_MIN_RECEIVER_SENSITIVITY - ED_RSSIOFFS + 10) ///< Minimal reported EDSAMPLE value (reported as 0)
+#define EDSAMPLE_MAX_REPORTED_VALUE (ED_RESULT_MAX / ED_RSSISCALE)                    ///< Maximal reported EDSAMPLE value (reported as 255)
+
+/**
+ * @brief  Converts the energy level received during the energy detection procedure to a dBm value.
+ *
+ * @param[in]  energy_level Energy level value compliant with the 802.15.4 specification (0-255)
+ *
+ * @return  Result of the energy detection procedure in dBm.
+ */
+static inline int8_t nrf_802154_addons_dbm_from_energy_level_calculate(uint8_t energy_level)
+{
+    return ((int16_t)(EDSAMPLE_MAX_REPORTED_VALUE - EDSAMPLE_MIN_REPORTED_VALUE) *
+            ((int16_t)energy_level)) /
+           ED_RESULT_MAX + EDSAMPLE_MIN_REPORTED_VALUE + ED_RSSIOFFS;
+}
+
+#endif // NRF_802154_NRFX_ADDONS_H__
