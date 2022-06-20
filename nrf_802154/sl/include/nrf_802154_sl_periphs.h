@@ -42,11 +42,6 @@
 
 #include <nrf.h>
 #include <nrfx.h>
-#if defined(DPPI_PRESENT)
-#include "hal/nrf_dppi.h"
-#else
-#include "hal/nrf_ppi.h"
-#endif
 
 /**
  * @def NRF_802154_EGU_INSTANCE_NO
