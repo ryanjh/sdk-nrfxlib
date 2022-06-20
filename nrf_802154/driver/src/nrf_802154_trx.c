@@ -233,7 +233,12 @@ void nrf_timer_init(void)
 {
     nrf_timer_mode_set(NRF_802154_TIMER_INSTANCE, NRF_TIMER_MODE_TIMER);
     nrf_timer_bit_width_set(NRF_802154_TIMER_INSTANCE, NRF_TIMER_BIT_WIDTH_32);
-    nrf_timer_frequency_set(NRF_802154_TIMER_INSTANCE, NRF_TIMER_FREQ_1MHz);
+#if defined(NRF52_SERIES) || defined(NRF53_SERIES)
+    /* 16MHz/2^4 = 1MHz */
+    nrf_timer_prescaler_set(NRF_802154_TIMER_INSTANCE, 4);
+#else
+#error Unknown device, set correct prescaler
+#endif
 
 #if NRF_802154_DISABLE_BCC_MATCHING
     // Setup timer for detecting PSDU reception.
