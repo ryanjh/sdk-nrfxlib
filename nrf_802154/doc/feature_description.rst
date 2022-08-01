@@ -70,7 +70,7 @@ The driver handles the pending bit as follows, depending on the protocol used:
   * If the driver matches the source address with an entry in the array, the pending bit is set (``1``).
   * If the array does not contain an address matching the source address, the pending bit is cleared (``0``).
 
-The driver does not transmit the ACK frame if it can't prepare the ACK frame before the transmission is ready to begin.
+The driver does not transmit the ACK frame if it cannot prepare the ACK frame before the transmission is ready to begin.
 
 .. _features_description_transmission:
 
@@ -242,7 +242,7 @@ Injecting the CSL Phase Information Element
 
 The driver can update the Coordinated Sampled Listening (CSL) phase in a transmitted frame at the moment of the frame transmission, by performing a CSL phase injection, for both data frames and enhanced ACK frames.
 
-The driver calculates the injected CSL phase value from the moment it ended the transmission of the last SHR symbol to the middle of the first pending delayed-reception window.
+The driver calculates the injected CSL phase value from the moment it ended the transmission of the PHY header (PHR) to the middle of the first pending delayed-reception window.
 If there are no pending delayed-reception windows, or the frame does not contain a CSL Information Element (IE), the driver does not perform any action, and it does not modify the frame.
 The higher layer must call :c:func:`nrf_802154_csl_writer_period_set` when it knows the period to be used, to let the driver set correctly the ``CSL Period`` field.
 The driver stores the provided value and uses it to fill the ``Period`` field in the transmissions that follow.

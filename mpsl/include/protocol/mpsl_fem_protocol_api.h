@@ -24,6 +24,7 @@
 #include <stdbool.h>
 
 #include <nrf.h>
+#include <nrf_peripherals.h>
 #include "nrf_errno.h"
 #include "mpsl_tx_power.h"
 
@@ -56,7 +57,11 @@ typedef enum
  *  of the provided API. Multiple tasks can then subscribe to the DPPI channel
  *  (by hardware design) thus indirectly to the event.
  */
+#ifdef PPI_PRESENT
 typedef uint32_t mpsl_subscribable_hw_event_t;
+#else
+typedef uint8_t mpsl_subscribable_hw_event_t;
+#endif
 
 /** @brief MPSL Front End Module event. */
 typedef struct
@@ -306,21 +311,17 @@ void mpsl_fem_cleanup(void);
 /** @brief Splits transmit power value into components to be applied on each stage on transmit path.
  *
  * @note If the exact value of @p power cannot be achieved, this function attempts to use less
- * power to not exceed constraint. However, if @p power is lower than the minimum achievable power,
- * or larger than the maximum achievable power, the function returns failure.
+ * power to not exceed constraint.
  *
  * @param[in]  power            TX power requested for transmission on air.
  * @param[out] p_tx_power_split Components of tx_power to be applied for stages on transmit path.
- *
- * @retval  0               Calculation performed successfully.
- * @retval  - ::NRF_EINVAL  Given @p power cannot be achieved. If requested value is too high
- *                          the @p p_tx_power_split will be set to a value representing maximum
- *                          achievable power. If the requested value is too low, the
- *                          @p p_tx_power_split will be set to a value representing minimum
- *                          achievable power.
+ *                              If requested @p power is too high, the split will be set to
+ *                              a value representing maximum achievable power. If the requested
+ *                              @p power is too low, the split will be set to a value representing
+ *                              minimum achievable power.
  */
-int32_t mpsl_fem_tx_power_split(const mpsl_tx_power_t power,
-                                mpsl_tx_power_split_t *const p_tx_power_split);
+void mpsl_fem_tx_power_split(const mpsl_tx_power_t power,
+                             mpsl_tx_power_split_t *const p_tx_power_split);
 
 /** @brief Sets PA gain.
  *

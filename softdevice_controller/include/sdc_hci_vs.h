@@ -123,7 +123,7 @@ typedef __PACKED_STRUCT
     uint8_t coex_scan_mode_config : 1;
 } sdc_hci_vs_supported_vs_commands_t;
 
-/** @brief Zephyr Static Adress type. */
+/** @brief Zephyr Static Address type. */
 typedef __PACKED_STRUCT
 {
     /** @brief Static device address. */
@@ -280,9 +280,10 @@ typedef __PACKED_STRUCT
      *         a connection, it specifies a Connection Handle. Otherwise this parameter is ignored.
      */
     uint16_t handle;
-    /** @brief The desired Tx_Power_Level in dBm in signed 1 octet integer format. If set to 127,
-     *         this indicates that the controller shall revert to using its default setting for Tx
-     *         power. If the selected power level is not supported, an error is returned.
+    /** @brief The desired Tx_Power_Level at the antenna in dBm in signed 1 octet integer format. If
+     *         set to 127, this indicates that the controller shall revert to using its default
+     *         setting for Tx power. If the selected power level is not supported, an error is
+     *         returned.
      */
     int8_t tx_power_level;
 } sdc_hci_cmd_vs_zephyr_write_tx_power_t;
@@ -341,7 +342,7 @@ typedef __PACKED_STRUCT
     /** @brief Connection Handle. */
     uint16_t connection_handle;
     /** @brief Connection Interval in microseconds. Valid range is 7,500 us to 4,000,000 us in 1,250
-     *         us steps.  If LLPM mode is enabled, parameters in the range 1,000 us to 7,000 us in
+     *         us steps. If LLPM mode is enabled, parameters in the range 1,000 us to 7,000 us in
      *         1,000 us steps are also accepted.
      */
     uint32_t conn_interval_us;
@@ -423,6 +424,9 @@ typedef __PACKED_STRUCT
  * Firmware_Variant that is currently active. The Firmware_Build defines an
  * additional counter for incremental builds.
  *
+ * Event(s) generated (unless masked away):
+ * When the command has completed, an HCI_Command_Complete event shall be generated.
+ *
  * @param[out] p_return Extra return parameters.
  *
  * @retval 0 if success.
@@ -438,6 +442,9 @@ uint8_t sdc_hci_cmd_vs_zephyr_read_version_info(sdc_hci_cmd_vs_zephyr_read_versi
  * This command shall return the Supported_Commands configuration parameter. It is
  * implied that if a command is listed as supported, the feature underlying that
  * command is also supported.
+ *
+ * Event(s) generated (unless masked away):
+ * When the command has completed, an HCI_Command_Complete event shall be generated.
  *
  * @param[out] p_return Extra return parameters.
  *
@@ -456,6 +463,9 @@ uint8_t sdc_hci_cmd_vs_zephyr_read_supported_commands(sdc_hci_cmd_vs_zephyr_read
  *
  * When the Write_BD_ADDR command has completed, a Command Complete event shall
  * be generated.
+ *
+ * Event(s) generated (unless masked away):
+ * When the command has completed, an HCI_Command_Complete event shall be generated.
  *
  * @param[in]  p_params Input parameters.
  *
@@ -487,6 +497,9 @@ uint8_t sdc_hci_cmd_vs_zephyr_write_bd_addr(const sdc_hci_cmd_vs_zephyr_write_bd
  * the Read_Key_Hierarchy_Roots command to return the identity root key (if only
  * one is available).
  *
+ * Event(s) generated (unless masked away):
+ * When the command has completed, an HCI_Command_Complete event shall be generated.
+ *
  * @param[out] p_return Extra return parameters.
  *
  * @retval 0 if success.
@@ -514,6 +527,9 @@ uint8_t sdc_hci_cmd_vs_zephyr_read_static_addresses(sdc_hci_cmd_vs_zephyr_read_s
  * important that it only gets assigned to a single address (either public or
  * static random).
  *
+ * Event(s) generated (unless masked away):
+ * When the command has completed, an HCI_Command_Complete event shall be generated.
+ *
  * @param[out] p_return Extra return parameters.
  *
  * @retval 0 if success.
@@ -526,6 +542,9 @@ uint8_t sdc_hci_cmd_vs_zephyr_read_key_hierarchy_roots(sdc_hci_cmd_vs_zephyr_rea
  *
  * This commands reads the controller chip temperature.
  *
+ * Event(s) generated (unless masked away):
+ * When the command has completed, an HCI_Command_Complete event shall be generated.
+ *
  * @param[out] p_return Extra return parameters.
  *
  * @retval 0 if success.
@@ -536,7 +555,7 @@ uint8_t sdc_hci_cmd_vs_zephyr_read_chip_temp(sdc_hci_cmd_vs_zephyr_read_chip_tem
 
 /** @brief Zephyr Write Tx Power Level (per Role/Connection).
  *
- * This command dynamically modifies Bluetooth LE Tx power level given a handle and a
+ * This command dynamically modifies Bluetooth LE Tx power level at the antenna given a handle and a
  * handle type (advertiser, scanner, connection).
  *
  * The Tx power of the Bluetooth LE radio interface is modified for any low-level link by
@@ -552,7 +571,10 @@ uint8_t sdc_hci_cmd_vs_zephyr_read_chip_temp(sdc_hci_cmd_vs_zephyr_read_chip_tem
  * enabled.
  *
  * The desired transmitter power level for the selected link instance is inputted
- * as Tx_Power_Level. The power setup and control can be performed dynamically
+ * as Tx_Power_Level. This value represents the actual power level fed to the antenna.
+ * When a Front-End Module is used, gain values for the SoC and FEM are calculated
+ * automatically to guarantee closest possible match to the value requested by the user
+ * at the RF output. The power setup and control can be performed dynamically
  * without the need of restarting the advertiser and scanner role/states. In case
  * of connections, the Tx power changes take effect only if the connections are
  * in a connected state.
@@ -562,6 +584,9 @@ uint8_t sdc_hci_cmd_vs_zephyr_read_chip_temp(sdc_hci_cmd_vs_zephyr_read_chip_tem
  * also with the Selected_Tx_Power by the controller which addresses and corrects
  * the possible mismatches between the desired Tx_Power_Level and the achievable
  * Tx powers given each individual controller capabilities.
+ *
+ * Event(s) generated (unless masked away):
+ * When the command has completed, an HCI_Command_Complete event shall be generated.
  *
  * @param[in]  p_params Input parameters.
  * @param[out] p_return Extra return parameters.
@@ -583,6 +608,9 @@ uint8_t sdc_hci_cmd_vs_zephyr_write_tx_power(const sdc_hci_cmd_vs_zephyr_write_t
  * It gets the BLE Tx power level for any given handle type (advertiser, scanner, connection) and
  * handle.
  *
+ * Event(s) generated (unless masked away):
+ * When the command has completed, an HCI_Command_Complete event shall be generated.
+ *
  * @param[in]  p_params Input parameters.
  * @param[out] p_return Extra return parameters.
  *
@@ -602,8 +630,7 @@ uint8_t sdc_hci_cmd_vs_zephyr_read_tx_power(const sdc_hci_cmd_vs_zephyr_read_tx_
  * commands.
  *
  * Event(s) generated (unless masked away):
- * When the HCI_Read_Supported_Vs_Commands command has completed,
- * an HCI_Command_Complete event shall be generated.
+ * When the command has completed, an HCI_Command_Complete event shall be generated.
  *
  * @param[out] p_return Extra return parameters.
  *
@@ -621,6 +648,9 @@ uint8_t sdc_hci_cmd_vs_read_supported_vs_commands(sdc_hci_cmd_vs_read_supported_
  *
  * After HCI Reset, this feature is disabled.
  *
+ * Event(s) generated (unless masked away):
+ * When the command has completed, an HCI_Command_Complete event shall be generated.
+ *
  * @param[in]  p_params Input parameters.
  *
  * @retval 0 if success.
@@ -636,6 +666,12 @@ uint8_t sdc_hci_cmd_vs_llpm_mode_set(const sdc_hci_cmd_vs_llpm_mode_set_t * p_pa
  *
  * The Supervision_Timeout in milliseconds shall be larger than (1 + Conn_Latency) *
  * Conn_Interval_Max * 2, where Conn_Interval_Max is given in milliseconds.
+ *
+ * Event(s) generated (unless masked away):
+ * When the Controller receives the command, the Controller sends the HCI_Command_Status
+ * event to the Host. The HCI_LE_Connection_Update_Complete event shall be generated after
+ * the connection parameters have been applied by the Controller or if the command
+ * subsequently fails.
  *
  * @param[in]  p_params Input parameters.
  *
@@ -659,6 +695,9 @@ uint8_t sdc_hci_cmd_vs_conn_update(const sdc_hci_cmd_vs_conn_update_t * p_params
  *
  * By default, that is after an HCI Reset, Extended Connection Events are enabled.
  *
+ * Event(s) generated (unless masked away):
+ * When the command has completed, an HCI_Command_Complete event shall be generated.
+ *
  * @param[in]  p_params Input parameters.
  *
  * @retval 0 if success.
@@ -675,6 +714,9 @@ uint8_t sdc_hci_cmd_vs_conn_event_extend(const sdc_hci_cmd_vs_conn_event_extend_
  * every connection event.
  *
  * @note If the application does not pull a report in time, it will be overwritten.
+ *
+ * Event(s) generated (unless masked away):
+ * When the command has completed, an HCI_Command_Complete event shall be generated.
  *
  * @param[in]  p_params Input parameters.
  *
@@ -696,6 +738,9 @@ uint8_t sdc_hci_cmd_vs_qos_conn_event_report_enable(const sdc_hci_cmd_vs_qos_con
  * The default event length is @ref SDC_DEFAULT_EVENT_LENGTH_US.
  *
  * See also @ref sdc_hci_cmd_vs_conn_event_extend().
+ *
+ * Event(s) generated (unless masked away):
+ * When the command has completed, an HCI_Command_Complete event shall be generated.
  *
  * @param[in]  p_params Input parameters.
  *
@@ -719,6 +764,9 @@ uint8_t sdc_hci_cmd_vs_event_length_set(const sdc_hci_cmd_vs_event_length_set_t 
  *
  * The default event length is @ref SDC_DEFAULT_EVENT_LENGTH_US.
  *
+ * Event(s) generated (unless masked away):
+ * When the command has completed, an HCI_Command_Complete event shall be generated.
+ *
  * @param[in]  p_params Input parameters.
  *
  * @retval 0 if success.
@@ -734,6 +782,9 @@ uint8_t sdc_hci_cmd_vs_periodic_adv_event_length_set(const sdc_hci_cmd_vs_period
  * Either the scanner requests a coex session as soon as it has received a valid access address, or
  * it only requests before transmitting.
  *
+ * Event(s) generated (unless masked away):
+ * When the command has completed, an HCI_Command_Complete event shall be generated.
+ *
  * @param[in]  p_params Input parameters.
  *
  * @retval 0 if success.
@@ -746,6 +797,9 @@ uint8_t sdc_hci_cmd_vs_coex_scan_mode_config(const sdc_hci_cmd_vs_coex_scan_mode
  *
  * This vendor specific command is used to configure the external radio coexistence priorities
  * depending on the Bluetooth device role.
+ *
+ * Event(s) generated (unless masked away):
+ * When the command has completed, an HCI_Command_Complete event shall be generated.
  *
  * @param[in]  p_params Input parameters.
  *

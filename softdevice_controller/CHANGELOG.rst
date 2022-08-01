@@ -9,6 +9,35 @@ Changelog
 
 All the notable changes to this project are documented in this file.
 
+Main branch
+***********
+
+All the notable changes included in the main branch are documented in this section.
+
+Added
+=====
+
+* Support for changing the radio transmitter's default power level using :c:func:`sdc_default_tx_power_set` (DRGN-15903).
+
+Changes
+=======
+
+* When the SoftDevice Controller is used with the Front-End Module provided by the :ref:`mpsl`, the transmit power is expressed as the power on the antenna instead of the power of the SoC output.
+  This allows dynamic gain control of the Front-End Module if the selected Front-End Module supports it.
+  The default transmit power for Bluetooth LE activities does not change, so if the Front-End Module has an exemplary gain of +10 dB, the output power of the SoC will be decreased accordingly.
+  To achieve higher output powers on the antenna, the user must call the appropriate API.
+  For :c:func:`sdc_hci_cmd_vs_zephyr_write_tx_power` the transmit power is expressed as the maximum power on the antenna.
+  The returned transmit power is the power on the antenna that can be achieved on the current SoC and Front-End Module.
+  For :c:func:`sdc_hci_cmd_vs_zephyr_read_tx_power` the returned transmit power is the power on the antenna that can be achieved on the current SoC and Front-End Module.
+  (KRKNWK-13714)
+* Improved channel selection for secondary advertising packets (DRGN-17452).
+* The extended advertiser will now always include the SyncInfo in the AUX_ADV_IND if there is a corresponding periodic advertiser, even if the offset cannot be represented (DRGN-16240).
+
+Bug fixes
+=========
+
+* Fixed an issue where the maximum data length capabilities were set to 27 bytes when the configured event length (:kconfig:option:`CONFIG_BT_CTLR_SDC_MAX_CONN_EVENT_LEN_DEFAULT`) was more than 65535 us (DRGN-17454).
+
 nRF Connect SDK v2.0.0
 **********************
 

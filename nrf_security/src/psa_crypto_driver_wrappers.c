@@ -20,12 +20,14 @@
  */
 
 #include "common.h"
+#include "stdbool.h"
 #include "psa_crypto_aead.h"
 #include "psa_crypto_cipher.h"
 #include "psa_crypto_core.h"
 #include "psa_crypto_driver_wrappers.h"
 #include "psa_crypto_hash.h"
 #include "psa_crypto_mac.h"
+#include <string.h>
 
 #include "mbedtls/platform.h"
 
@@ -95,6 +97,99 @@
 #endif
 #include "psa_crypto_se.h"
 #endif
+
+
+#if defined(PSA_CRYPTO_DRIVER_CC3XX)
+/* This function is exposed in the runtime library, we declare it
+ * here to avoid building warnings. */
+extern psa_status_t cc3xx_asn1_get_tag(unsigned char **p,
+                                       const unsigned char *end,
+                                       size_t *len,
+                                       int tag); 
+
+/* This function calculates the key bits of an RSA key stored in ANS1 format in PSA.
+ * Only tested with Key Pairs at the moment. This is a hack that will be removed
+ * when then runtime library sets the key bits correctly in the import key */
+static size_t rsa_get_key_bits(const uint8_t *key_data, size_t key_size, bool is_keypair){
+    int ret;
+    uint8_t **key_start_pnt = (unsigned char **)&key_data;
+    uint8_t *key_end_pnt = (unsigned char *)key_data + key_size;
+    size_t len;
+    size_t key_bits = 0;
+
+    /* Move the pointer after the sequence */
+    ret = cc3xx_asn1_get_tag(key_start_pnt, key_end_pnt, &len,
+                             0x20 |   /* Constructed */
+                             0x10);  /* Sequence */
+    if (ret < 0) {
+        return 0;
+    }
+
+    if (is_keypair) {
+        /* The key pair has a version number as an interger */
+        ret = cc3xx_asn1_get_tag(key_start_pnt, key_end_pnt, &len,
+                                 0x2);   /* Integer */
+        if (ret < 0) {
+            return 0;
+        }
+
+        *key_start_pnt += len;
+    }
+
+
+
+    /* Get the modulus n */
+    ret = cc3xx_asn1_get_tag(key_start_pnt, key_end_pnt, &len,
+                             0x2); /* Integer */
+    if (ret < 0) {
+        return 0;
+    }
+
+    if (*key_start_pnt[0] == 0x00){
+        len -= 1;
+    }
+
+    return PSA_BYTES_TO_BITS(len);
+}
+#endif
+
+psa_status_t psa_driver_wrapper_init( void )
+{
+    psa_status_t status = PSA_ERROR_CORRUPTION_DETECTED;
+
+#if defined(MBEDTLS_PSA_CRYPTO_SE_C)
+    status = psa_init_all_se_drivers( );
+    if( status != PSA_SUCCESS )
+        return( status );
+#endif
+
+#if defined(PSA_CRYPTO_DRIVER_TEST)
+    status = mbedtls_test_transparent_init( );
+    if( status != PSA_SUCCESS )
+        return( status );
+
+    status = mbedtls_test_opaque_init( );
+    if( status != PSA_SUCCESS )
+        return( status );
+#endif
+
+    (void) status;
+    return( PSA_SUCCESS );
+}
+
+void psa_driver_wrapper_free( void )
+{
+#if defined(MBEDTLS_PSA_CRYPTO_SE_C)
+    /* Unregister all secure element drivers, so that we restart from
+     * a pristine state. */
+    psa_unregister_all_se_drivers( );
+#endif /* MBEDTLS_PSA_CRYPTO_SE_C */
+
+#if defined(PSA_CRYPTO_DRIVER_TEST)
+    mbedtls_test_transparent_free( );
+    mbedtls_test_opaque_free( );
+#endif
+}
 
 /* Start delegation functions */
 psa_status_t psa_driver_wrapper_sign_message(
@@ -769,14 +864,45 @@ psa_status_t psa_driver_wrapper_import_key(
                 return( status );
 #endif /* PSA_CRYPTO_DRIVER_TEST */
 #if defined(PSA_CRYPTO_DRIVER_CC3XX)
+
+           if(psa_get_key_type(attributes) == PSA_KEY_TYPE_AES) {
+               size_t temp_bits = PSA_BYTES_TO_BITS(key_buffer_size);
+
+               if (temp_bits != 128 && temp_bits != 192 && temp_bits != 256){
+                   return PSA_ERROR_INVALID_ARGUMENT;
+               }
+           }
+
            status = cc3xx_import_key(
                          attributes,
                          data, data_length,
                          key_buffer, key_buffer_size,
                          key_buffer_length, bits );
            /* Declared with fallback == true */
-           if( status != PSA_ERROR_NOT_SUPPORTED )
-               return( status );
+           if( status != PSA_ERROR_NOT_SUPPORTED ){
+
+               /* Ugly hack used because the driver import function sets the
+                * output bits based on the key attributes. The TF-M regression
+                * tests allow importing a key without previously setting the
+                * key bits. The import function is now expected to set the output
+                * bits based on the size of the key buffer. Check: NCSDK-15763
+                */
+               if (attributes->core.bits == 0){
+                   *bits = PSA_BYTES_TO_BITS(data_length);
+               }
+
+               /* Ugly hack to read the RSA key bits from the modulus and
+                * not from the buffer size since the representation of the
+                * RSA keys includes different elements */
+               if(status == PSA_SUCCESS && 
+                  psa_get_key_type(attributes) == PSA_KEY_TYPE_RSA_KEY_PAIR) {
+
+                   *bits = rsa_get_key_bits(data, data_length, true);
+               }
+
+                   return( status );
+               }
+
 #endif
 //TODO: Either remove or adjust when mac is available in Oberon
 #if defined(PSA_CRYPTO_DRIVER_OBERON)
@@ -1046,6 +1172,8 @@ psa_status_t psa_driver_wrapper_cipher_encrypt(
     const uint8_t *key_buffer,
     size_t key_buffer_size,
     psa_algorithm_t alg,
+    const uint8_t *iv,
+    size_t iv_length,
     const uint8_t *input,
     size_t input_length,
     uint8_t *output,
@@ -1077,6 +1205,19 @@ psa_status_t psa_driver_wrapper_cipher_encrypt(
                 return( status );
 #endif /* PSA_CRYPTO_DRIVER_TEST */
 #if defined(PSA_CRYPTO_DRIVER_CC3XX)
+            /* Circumvention on API-breaker that breaks runtime compatibility.
+            * Please see NCSDK-15614 and remove this once updated runtimes is created. */
+            if(iv_length > 0)
+            {
+                /* Copying the IV to the output variable because runtime-libraries currently
+                * doesn't support the new parameters in Mbed TLS 3.1.0 (iv and iv_length).
+                * Also updating the output and output_size variables to match with the
+                * expected format of the runtime libraries. */
+                output -= iv_length;
+                memcpy(output, iv, iv_length);
+                output_size += iv_length;
+            }
+
             status = cc3xx_cipher_encrypt( attributes,
                                            key_buffer,
                                            key_buffer_size,
@@ -1086,23 +1227,56 @@ psa_status_t psa_driver_wrapper_cipher_encrypt(
                                            output,
                                            output_size,
                                            output_length );
+            if(iv_length > 0){
+                output += iv_length;
+                output_size -= iv_length;
+                /* The output length will include the IV which is added by the
+                * PSA core after the driver wrapper call so we need to deduct it
+                * from here. */
+                *output_length -= iv_length;
+            }
+
             /* Declared with fallback == true */
             if( status != PSA_ERROR_NOT_SUPPORTED )
                 return( status );
+
 #endif /* PSA_CRYPTO_DRIVER_CC3XX */
 #if defined(PSA_CRYPTO_DRIVER_OBERON)
-           status = oberon_cipher_encrypt( attributes,
-                                           key_buffer,
-                                           key_buffer_size,
-                                           alg,
-                                           input,
-                                           input_length,
-                                           output,
-                                           output_size,
-                                           output_length );
-           /* Declared with fallback == true */
-           if( status != PSA_ERROR_NOT_SUPPORTED )
-               return( status );
+            /* Circumvention on API-breaker that breaks runtime compatibility.
+            * Please see NCSDK-15614 and remove this once updated runtimes is created. */
+            if(iv_length > 0)
+            {
+                /* Copying the IV to the output variable because runtime-libraries currently
+                * doesn't support the new parameters in Mbed TLS 3.1.0 (iv and iv_length).
+                * Also updating the output and output_size variables to match with the
+                * expected format of the runtime libraries. */
+                output -= iv_length;
+                memcpy(output, iv, iv_length);
+                output_size += iv_length;
+            }
+
+            status = oberon_cipher_encrypt( attributes,
+                                            key_buffer,
+                                            key_buffer_size,
+                                            alg,
+                                            input,
+                                            input_length,
+                                            output,
+                                            output_size,
+                                            output_length );
+            if(iv_length > 0){
+                output += iv_length;
+                output_size -= iv_length;
+                /* The output length will include the IV which is added by the
+                * PSA core after the driver wrapper call so we need to deduct it
+                * from here. */
+                *output_length -= iv_length;
+            }
+
+            /* Declared with fallback == true */
+            if( status != PSA_ERROR_NOT_SUPPORTED )
+                return( status );
+
 #endif /* PSA_CRYPTO_DRIVER_OBERON */
 #endif /* PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT */
 
@@ -1111,6 +1285,8 @@ psa_status_t psa_driver_wrapper_cipher_encrypt(
                                                 key_buffer,
                                                 key_buffer_size,
                                                 alg,
+                                                iv,
+                                                iv_length,
                                                 input,
                                                 input_length,
                                                 output,
@@ -1128,6 +1304,8 @@ psa_status_t psa_driver_wrapper_cipher_encrypt(
                                                         key_buffer,
                                                         key_buffer_size,
                                                         alg,
+                                                        iv,
+                                                        iv_length,
                                                         input,
                                                         input_length,
                                                         output,
@@ -1142,6 +1320,8 @@ psa_status_t psa_driver_wrapper_cipher_encrypt(
             (void)key_buffer;
             (void)key_buffer_size;
             (void)alg;
+            (void)iv;
+            (void)iv_length;
             (void)input;
             (void)input_length;
             (void)output;
