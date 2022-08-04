@@ -1,0 +1,4 @@
+name: nemagfx
+build:
+  cmake: .
+  kconfig: Kconfig

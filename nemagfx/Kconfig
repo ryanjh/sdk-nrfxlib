@@ -1,0 +1,77 @@
+#
+# Copyright (c) 2022 Nordic Semiconductor
+#
+# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+#
+
+menuconfig NEMA
+	bool "Nema graphics subsystem"
+	help
+	  Nema graphics subsystem.
+
+if NEMA
+
+module = nemagfx
+module-str = nemagfx
+
+choice NEMA_SOURCE
+	prompt "Nema origin"
+	default NEMA_SOURCE_NRFXLIB
+	help
+	  Select the origin of the library.
+
+config NEMA_SOURCE_NRFXLIB
+	bool "nrfxlib"
+
+endchoice # NEMA_SOURCE
+
+choice NEMA_PLATFORM_CHOICE
+	prompt "Nema platform"
+	default NEMA_PLATFORM_NATIVE_POSIX if BOARD_NATIVE_POSIX
+	default NEMA_PLATFORM_NRF7140 if BOARD_NRF7140DK_NRF7140_CPUAPP
+
+config NEMA_PLATFORM_NATIVE_POSIX
+	bool "Native POSIX platform with SDL"
+	depends on BOARD_NATIVE_POSIX
+	select HAS_SDL
+	help
+	  Native POSIX Nema platform.
+
+config NEMA_PLATFORM_NRF7140
+	bool "nRF7140 SoC"
+	help
+	  nRF7140 SoC with integrated GPU and display controller.
+
+endchoice
+
+config NEMA_PLATFORM
+	string
+	default "native_posix" if NEMA_PLATFORM_NATIVE_POSIX
+	default "nrf7140" if NEMA_PLATFORM_NRF7140
+	help
+	  String name of the target platform.
+
+config APP_LINK_WITH_NEMA
+	bool "Link 'app' with the Nema libraries"
+	default y
+	help
+	  Add Nema libraries header files to the 'app' include path.
+
+config NEMADC_ENABLE
+	bool "Nema Display Controller library"
+	default y
+	help
+	  Use NEMA-DC-400 built in display controller library.
+
+config NEMAVG_ENABLE
+	bool "Nema Vector Graphics library"
+	depends on NEMA_PLATFORM_NRF7140
+	help
+	  Enable Nema Vector Graphics library.
+
+config NEMAGUI_ENABLE
+	bool "Nema GUI library"
+	help
+	  Enable Nema GUI library.
+
+endif # NEMA

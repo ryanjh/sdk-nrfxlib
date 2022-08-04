@@ -16,6 +16,7 @@ Refer to their respective documentation for more information.
    crypto/README
    gzll/README
    lc3/README
+   nemagfx/README
    nrf_modem/README
    mpsl/README
    nrf_802154/README
