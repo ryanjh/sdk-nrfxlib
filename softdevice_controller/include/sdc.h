@@ -100,16 +100,21 @@ extern "C" {
  */
 
 /** @brief Auxiliary defines, not to be used outside of this file. */
-#define __MEM_DEFAULT_CENTRAL_LINK_SIZE 958
-#define __MEM_DEFAULT_PERIPHERAL_LINK_SIZE 1054
-#define __MEM_BUFFER_OVERHEAD_SIZE 7
+#define __MEM_MINIMAL_CENTRAL_LINK_SIZE 994
+#define __MEM_MINIMAL_PERIPHERAL_LINK_SIZE 1098
+#define __MEM_TX_BUFFER_OVERHEAD_SIZE 16
+#define __MEM_RX_BUFFER_OVERHEAD_SIZE 7
+
+/* Dummy defines to avoid red CI. TODO DRGN-17651: Remove */
+#define __MEM_DEFAULT_CENTRAL_LINK_SIZE 1088
+#define __MEM_DEFAULT_PERIPHERAL_LINK_SIZE 1192
+#define __MEM_BUFFER_OVERHEAD_SIZE (__MEM_TX_BUFFER_OVERHEAD_SIZE + __MEM_RX_BUFFER_OVERHEAD_SIZE)
+
 #define __MEM_ADDITIONAL_LINK_SIZE(tx_size, rx_size, tx_count, rx_count) \
-    ((tx_count) * (tx_size - SDC_DEFAULT_TX_PACKET_SIZE) + \
-     (rx_count) * (rx_size - SDC_DEFAULT_RX_PACKET_SIZE) + \
-     (tx_count - SDC_DEFAULT_TX_PACKET_COUNT) * \
-        (__MEM_BUFFER_OVERHEAD_SIZE + SDC_DEFAULT_TX_PACKET_SIZE) + \
-     (rx_count - SDC_DEFAULT_RX_PACKET_COUNT) * \
-        (__MEM_BUFFER_OVERHEAD_SIZE + SDC_DEFAULT_RX_PACKET_SIZE))
+    ((tx_count) * ((tx_size) + __MEM_TX_BUFFER_OVERHEAD_SIZE) - \
+     (SDC_DEFAULT_TX_PACKET_SIZE + __MEM_TX_BUFFER_OVERHEAD_SIZE) + \
+     (rx_count) * ((rx_size) + __MEM_RX_BUFFER_OVERHEAD_SIZE) - \
+     (SDC_DEFAULT_RX_PACKET_SIZE + __MEM_RX_BUFFER_OVERHEAD_SIZE))
 
 /** @brief Maximum memory required per central link.
  *
@@ -119,7 +124,7 @@ extern "C" {
  * @param[in] rx_count Link Layer RX packet count.
  */
 #define SDC_MEM_PER_CENTRAL_LINK(tx_size, rx_size, tx_count, rx_count) \
-    (__MEM_DEFAULT_CENTRAL_LINK_SIZE + \
+    (__MEM_MINIMAL_CENTRAL_LINK_SIZE + \
      __MEM_ADDITIONAL_LINK_SIZE(tx_size, rx_size, tx_count, rx_count))
 
 /** @brief Maximum memory required per peripheral link.
@@ -130,7 +135,7 @@ extern "C" {
  * @param[in] rx_count Link Layer RX packet count.
  */
 #define SDC_MEM_PER_PERIPHERAL_LINK(tx_size, rx_size, tx_count, rx_count) \
-    (__MEM_DEFAULT_PERIPHERAL_LINK_SIZE + \
+    (__MEM_MINIMAL_PERIPHERAL_LINK_SIZE + \
      __MEM_ADDITIONAL_LINK_SIZE(tx_size, rx_size, tx_count, rx_count))
 
 /** Maximum shared memory required for central links. */
@@ -140,14 +145,14 @@ extern "C" {
 #define SDC_MEM_PERIPHERAL_LINKS_SHARED  24
 
 /** Memory required for scanner buffers when only supporting legacy scanning. */
-#define SDC_MEM_SCAN_BUFFER(buffer_count) (75 + (buffer_count) * 71)
+#define SDC_MEM_SCAN_BUFFER(buffer_count) (75 + (buffer_count) * 90)
 
 /** Memory required for scanner buffers when supporting extended scanning. */
-#define SDC_MEM_SCAN_BUFFER_EXT(buffer_count) (40 + (buffer_count) * 290)
+#define SDC_MEM_SCAN_BUFFER_EXT(buffer_count) (42 + (buffer_count) * 307)
 
 /** @brief Auxiliary defines, not to be used outside of this file. */
-#define __MEM_PER_ADV_SET_LOW(max_adv_data) ((4429+(max_adv_data)*18)/10)
-#define __MEM_PER_ADV_SET_HIGH(max_adv_data) (630+(max_adv_data))
+#define __MEM_PER_ADV_SET_LOW(max_adv_data) ((4829+(max_adv_data)*18)/10)
+#define __MEM_PER_ADV_SET_HIGH(max_adv_data) (670+(max_adv_data))
 #define __MEM_PER_PERIODIC_ADV_SET_LOW(max_adv_data) ((2418+(max_adv_data)*18)/10)
 #define __MEM_PER_PERIODIC_ADV_SET_HIGH(max_adv_data) (433+(max_adv_data))
 
@@ -173,7 +178,7 @@ extern "C" {
  *
  * @param[in] buffer_count The number of periodic synchronization receive buffers.
  */
-#define SDC_MEM_PER_PERIODIC_SYNC(buffer_count) (200 + (buffer_count) * 264)
+#define SDC_MEM_PER_PERIODIC_SYNC(buffer_count) (225 + (buffer_count) * 282)
 
 /** Memory required for the periodic adv list.
  *
@@ -268,9 +273,9 @@ typedef struct
                                    Default: @ref SDC_DEFAULT_TX_PACKET_SIZE. */
     uint8_t rx_packet_size;   /**< Link Layer RX packet size. Valid range: 27-251.
                                    Default: @ref SDC_DEFAULT_RX_PACKET_SIZE. */
-    uint8_t tx_packet_count;  /**< Link Layer TX packet count per link.
+    uint8_t tx_packet_count;  /**< Link Layer TX packet count per link. Minimum of 1.
                                    Default: @ref SDC_DEFAULT_TX_PACKET_COUNT. */
-    uint8_t rx_packet_count;  /**< Link Layer RX packet count per link.
+    uint8_t rx_packet_count;  /**< Link Layer RX packet count per link. Minimum of 1.
                                    Default: @ref SDC_DEFAULT_RX_PACKET_COUNT. */
 } sdc_cfg_buffer_cfg_t;
 
@@ -769,6 +774,11 @@ int32_t sdc_coex_adv_mode_configure(bool adv_cont_on_denial);
  * The power level set will be equal to or less than the one requested, based on the values
  * supported by the hardware used. Values outside the suported range will be set to the nearest
  * supported value.
+ *
+ * @p requested_power_level represents the actual power level fed to the antenna.
+ * When a Front-End Module is used, gain values for the SoC and FEM are calculated
+ * automatically to guarantee the closest possible match to the value requested by the user
+ * at the RF output.
  *
  * @param[in] requested_power_level The power level in dBm to use.
  *
