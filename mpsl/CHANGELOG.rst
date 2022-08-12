@@ -12,14 +12,21 @@ Main branch
 
 All the notable changes included in the main branch are documented in this section.
 
+Added
+=====
+
+* Support for the nRF21540 GPIO & SPI front-end module.
+  SPI is used to set Tx gain of the nRF21540 in runtime.
+  Support for this mode of operation for nRF21540 with Bluetooth LE is experimental.
+
 Changes
 =======
 
-* Removed the :c:func:`nrf_802154_fal_tx_power_get` function that is not used anymore by nRF 802.15.4 Radio Driver (KRKNWK-14336).
+* Removed the :c:func:`nrf_802154_fal_tx_power_get` function that is not used anymore by nRF 802.15.4 Radio Driver. (KRKNWK-14336)
 * Changed :c:func:`mpsl_fem_tx_power_split` function so the :c:member:`mpsl_tx_power_split_t.radio_tx_power` field contains a value supported by the RADIO peripheral.
-  Previously the value needed to be adjusted before applying to the RADIO peripheral. (KRKNWK-14323).
-* Changed :c:struct:`mpsl_fem_gpiote_pin_config_t` and :c:struct:`mpsl_fem_gpio_pin_config_t` to require GPIO port address, port number and relative pin number instead of the absolute pin number (KRKNWK-11891).
-* Added production support for the 1-wire coexistence interface on the nRF52 Series (DRGN-16439).
+  Previously the value needed to be adjusted before applying to the RADIO peripheral. (KRKNWK-14323)
+* Changed :c:struct:`mpsl_fem_gpiote_pin_config_t` and :c:struct:`mpsl_fem_gpio_pin_config_t` to require GPIO port address, port number and relative pin number instead of the absolute pin number. (KRKNWK-11891)
+* Added production support for the 1-wire coexistence interface on the Nordic nRF52 Series. (DRGN-16439)
 
 nRF Connect SDK v2.0.0
 **********************
