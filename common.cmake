@@ -26,7 +26,7 @@
 #                      This flag requires 'BASE_DIR'
 #
 function(nrfxlib_calculate_lib_path lib_path)
-  cmake_parse_arguments(CALC_LIB_PATH "SOFT_FLOAT_FALLBACK;SOC_MODE" "BASE_DIR" "" ${ARGN})
+  cmake_parse_arguments(CALC_LIB_PATH "SOFT_FLOAT_FALLBACK;SOC_MODE;FPGA_PEER" "BASE_DIR" "" ${ARGN})
 
   if(CALC_LIB_PATH_SOFT_FLOAT_FALLBACK AND NOT DEFINED CALC_LIB_PATH_BASE_DIR)
     message(WARNING "nrfxlib_calculate_lib_path(SOFT_FLOAT_FALLBACK ...) "
@@ -39,6 +39,8 @@ function(nrfxlib_calculate_lib_path lib_path)
     if(CONFIG_EMULATOR_FPGA)
       set(arch_soc_dir "${arch_soc_dir}_FPGA")
     endif()
+  elseif(${CALC_LIB_PATH_FPGA_PEER})
+    set(arch_soc_dir "${GCC_M_CPU}_FPGA_PEER")
   else()
     # Add Arch type
     assert(GCC_M_CPU "GCC_M_CPU must be set to find correct lib.")
