@@ -42,7 +42,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "nrf.h"
+#include "nrfx.h"
 
 #include "nrf_802154_const.h"
 

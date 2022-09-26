@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 - 2022, Nordic Semiconductor ASA
+ * Copyright (c) 2019 - 2021, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -57,7 +57,7 @@ extern "C" {
  *
  */
 #ifndef NRF_802154_EGU_INSTANCE_NO
-#define NRF_802154_EGU_INSTANCE_NO 0
+#define NRF_802154_EGU_INSTANCE_NO 020
 #endif
 
 /**
@@ -232,31 +232,10 @@ extern "C" {
 #define NRF_802154_DPPI_RADIO_CCAIDLE 9U
 #endif
 
-#if NRF_802154_TEST_MODES_ENABLED
 /**
- * @def NRF_802154_DPPI_RADIO_CCABUSY
+ * @def NRF_802154_DPPI_RADIO_HW_TRIGGER
  *
- * The DPPI channel that RADIO.CCABUSY event publishes to
- */
-#ifndef NRF_802154_DPPI_RADIO_CCABUSY
-#define NRF_802154_DPPI_RADIO_CCABUSY 14U
-#endif
-
-/**
- * @def NRF_802154_DPPI_RADIO_TEST_MODE_USED_MASK
- *
- * Helper bit mask of DPPI channels used by the 802.15.4 driver's test mode.
- */
-#define NRF_802154_DPPI_RADIO_TEST_MODE_USED_MASK \
-    (1UL << NRF_802154_DPPI_RADIO_CCABUSY)
-#else // NRF_802154_TEST_MODES_ENABLED
-#define NRF_802154_DPPI_RADIO_TEST_MODE_USED_MASK 0U
-#endif  // NRF_802154_TEST_MODES_ENABLED
-
-/**
- * @def NRF_802154_DPPI_RADIO_CCABUSY
- *
- * The DPPI channel that triggers radio
+ * The DPPI channel that triggers radio.
  */
 #ifndef NRF_802154_DPPI_RADIO_HW_TRIGGER
 #define NRF_802154_DPPI_RADIO_HW_TRIGGER 15U
@@ -269,8 +248,7 @@ extern "C" {
  */
 #ifdef NRF_802154_FRAME_TIMESTAMP_ENABLED
 #define NRF_802154_DPPI_TIMESTAMPS_USED_MASK                \
-    ((1UL << NRF_802154_PPI_RTC_COMPARE_TO_TIMER_CAPTURE) | \
-     (1UL << NRF_802154_PPI_TIMESTAMP_EVENT_TO_TIMER_CAPTURE))
+     (1UL << NRF_802154_PPI_TIMESTAMP_EVENT_TO_TIMER_CAPTURE)
 #else // NRF_802154_FRAME_TIMESTAMP_ENABLED
 #define NRF_802154_DPPI_TIMESTAMPS_USED_MASK 0U
 #endif  // NRF_802154_FRAME_TIMESTAMP_ENABLED
@@ -292,7 +270,6 @@ extern "C" {
         (1UL << NRF_802154_DPPI_RADIO_SYNC_TO_EGU_SYNC) |      \
         (1UL << NRF_802154_DPPI_RADIO_CCAIDLE) |               \
         (1UL << NRF_802154_DPPI_RADIO_HW_TRIGGER) |            \
-        NRF_802154_DPPI_RADIO_TEST_MODE_USED_MASK |            \
         NRF_802154_DPPI_TIMESTAMPS_USED_MASK)
 #endif // NRF_802154_DPPI_CHANNELS_USED_MASK
 
@@ -304,6 +281,22 @@ extern "C" {
 #ifndef NRF_802154_DPPI_GROUPS_USED_MASK
 #define NRF_802154_DPPI_GROUPS_USED_MASK 0UL
 #endif // NRF_802154_DPPI_GROUPS_USED_MASK
+
+/**
+ * @def NRF_802154_HIGH_PRECISION_TIMER_INSTANCE_NO
+ *
+ * Number of the timer instance used for precise frame timestamps and synchronous radio operations.
+ *
+ */
+#define NRF_802154_HIGH_PRECISION_TIMER_INSTANCE_NO 020
+
+/**
+ * @def NRF_802154_TIMER_INSTANCE_NO
+ *
+ * Number of the timer instance used both by the driver for ACK IFS and by the FEM module.
+ *
+ */
+#define NRF_802154_TIMER_INSTANCE_NO                022
 
 #ifdef __cplusplus
 }

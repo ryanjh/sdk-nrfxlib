@@ -38,6 +38,7 @@
  *
  */
 
+#include "nrfx.h"
 #include "nrf_802154_debug.h"
 
 #include <stdint.h>

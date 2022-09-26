@@ -32,7 +32,7 @@
  *
  */
 
-#include <nrf.h>
+#include <nrfx.h>
 #include "nrf_errno.h"
 #include <stdbool.h>
 #include <stdint.h>

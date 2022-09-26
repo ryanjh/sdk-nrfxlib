@@ -197,6 +197,19 @@ static void state_set(radio_state_t state)
     request_preconditions_for_state(state);
 }
 
+/** Specifies what ramp up trigger mode to use when handling RX or TX operation request.
+ *
+ * It is assumed that the DELAYED_TRX module always requests HW mode both RX and TX,
+ * while in all other cases SW mode is required.
+ *
+ * @param[in]  request_orig  Module that originates the request.
+ */
+static nrf_802154_trx_ramp_up_trigger_mode_t ramp_up_mode_choose(req_originator_t request_orig)
+{
+    return (request_orig == REQ_ORIG_DELAYED_TRX) ?
+           TRX_RAMP_UP_HW_TRIGGER : TRX_RAMP_UP_SW_TRIGGER;
+}
+
 /** Clear RX frame data. */
 static void rx_data_clear(void)
 {
@@ -624,7 +637,11 @@ static int_fast8_t action_needed(rsch_prio_t old_prio, rsch_prio_t new_prio, rad
 /** Check if time remaining in the timeslot is long enough to process whole critical section. */
 static bool remaining_timeslot_time_is_enough_for_crit_sect(void)
 {
+#if defined(HALTIUM_XXAA)
+    return true;
+#else
     return nrf_802154_rsch_timeslot_us_left_get() >= MAX_CRIT_SECT_TIME;
+#endif
 }
 
 /** Check if critical section can be processed at the moment.
@@ -1001,19 +1018,27 @@ static nrf_802154_trx_transmit_notifications_t make_trx_frame_transmit_notificat
     return result;
 }
 
-/** Initialize RX operation. */
-static void rx_init(void)
+/**
+ * @brief Initializes RX operation
+ *
+ * @param[in] rampup_trigg_mode   Desired trigger mode for radio ramp up.
+ *
+ * @retval true   Initialization has failed such that it is necessary to call @ref nrf_802154_trx_abort.
+ * @retval false  Can continue without @ref nrf_802154_trx_abort, however, this does not mean
+ *                initialization was successful.
+ */
+static bool rx_init(nrf_802154_trx_ramp_up_trigger_mode_t rampup_trigg_mode)
 {
     bool free_buffer;
 
     if (!timeslot_is_granted())
     {
-        return;
+        return false;
     }
 
     if (!are_preconditions_met())
     {
-        return;
+        return false;
     }
 
     // Clear filtering flag
@@ -1029,8 +1054,23 @@ static void rx_init(void)
     (void)nrf_802154_tx_power_split_pib_power_get(&split_power);
 
     nrf_802154_trx_receive_frame(BCC_INIT / 8U,
+                                 rampup_trigg_mode,
                                  m_trx_receive_frame_notifications_mask,
                                  &split_power);
+
+    if (rampup_trigg_mode == TRX_RAMP_UP_HW_TRIGGER)
+    {
+        uint32_t ppi_ch = nrf_802154_trx_ramp_up_ppi_channel_get();
+
+        if (!nrf_802154_rsch_delayed_timeslot_ppi_update(ppi_ch))
+        {
+            /**
+             * The trigger has occurred. This has happened too early so there is a high risk
+             * that the radio will not ramp up. It is necessary to abort the operation.
+             */
+            return true;
+        }
+    }
 
 #if NRF_802154_TOTAL_TIMES_MEASUREMENT_ENABLED
     m_listening_start_hp_timestamp = nrf_802154_hp_timer_current_time_get();
@@ -1058,10 +1098,14 @@ static void rx_init(void)
     rx_data_clear();
 
     mp_ack = NULL;
+
+    return false;
 }
 
 /** Initialize TX operation. */
-static bool tx_init(const uint8_t * p_data, bool cca)
+static bool tx_init(const uint8_t                       * p_data,
+                    nrf_802154_trx_ramp_up_trigger_mode_t rampup_trigg_mode,
+                    bool                                  cca)
 {
     if (!timeslot_is_granted() || !nrf_802154_rsch_timeslot_request(
             nrf_802154_tx_duration_get(p_data[0], cca, ack_is_requested(p_data))))
@@ -1091,9 +1135,25 @@ static bool tx_init(const uint8_t * p_data, bool cca)
 
     m_flags.tx_with_cca = cca;
     nrf_802154_trx_transmit_frame(nrf_802154_tx_work_buffer_get(p_data),
+                                  rampup_trigg_mode,
                                   cca,
                                   &m_tx_power,
                                   m_trx_transmit_frame_notifications_mask);
+
+    if (rampup_trigg_mode == TRX_RAMP_UP_HW_TRIGGER)
+    {
+        uint32_t ppi_ch = nrf_802154_trx_ramp_up_ppi_channel_get();
+
+        if (!nrf_802154_rsch_delayed_timeslot_ppi_update(ppi_ch))
+        {
+            /**
+             * The trigger has occurred. This has happened too early so there is a high risk
+             * that the radio will not ramp up. It is necessary to abort the operation.
+             */
+            nrf_802154_trx_abort();
+            return false;
+        }
+    }
 
     return true;
 }
@@ -1345,15 +1405,15 @@ static void on_preconditions_approved(radio_state_t state)
             break;
 
         case RADIO_STATE_RX:
-            rx_init();
+            (void)rx_init(TRX_RAMP_UP_SW_TRIGGER);
             break;
 
         case RADIO_STATE_CCA_TX:
-            (void)tx_init(mp_tx_data, true);
+            (void)tx_init(mp_tx_data, TRX_RAMP_UP_SW_TRIGGER, true);
             break;
 
         case RADIO_STATE_TX:
-            (void)tx_init(mp_tx_data, false);
+            (void)tx_init(mp_tx_data, TRX_RAMP_UP_SW_TRIGGER, false);
             break;
 
         case RADIO_STATE_ED:
@@ -1707,7 +1767,7 @@ uint8_t nrf_802154_trx_receive_frame_bcmatched(uint8_t bcc)
                  (!nrf_802154_pib_promiscuous_get()))
         {
             trx_abort();
-            rx_init();
+            (void)rx_init(TRX_RAMP_UP_SW_TRIGGER);
 
             frame_accepted = false;
 
@@ -1788,7 +1848,7 @@ uint8_t nrf_802154_trx_receive_frame_bcmatched(uint8_t bcc)
             // We should not leave trx in temporary state, let's receive then.
             // We avoid hard reset of radio during TX ACK phase due to timeslot end,
             // which could result in spurious RF emission.
-            rx_init();
+            (void)rx_init(TRX_RAMP_UP_SW_TRIGGER);
 
             // Don't care about the result - if the notification cannot be performed
             // no impact on the device's operation is expected
@@ -1913,6 +1973,7 @@ void nrf_802154_trx_receive_frame_crcerror(void)
     (void)nrf_802154_tx_power_split_pib_power_get(&split_power);
 
     nrf_802154_trx_receive_frame(BCC_INIT / 8U,
+                                 TRX_RAMP_UP_SW_TRIGGER,
                                  m_trx_receive_frame_notifications_mask,
                                  &split_power);
 
@@ -2074,7 +2135,7 @@ void nrf_802154_trx_receive_frame_received(void)
                     mp_current_rx_buffer->free = false;
 
                     state_set(RADIO_STATE_RX);
-                    rx_init();
+                    (void)rx_init(TRX_RAMP_UP_SW_TRIGGER);
 
                     received_frame_notify_and_nesting_allow(p_received_data);
                 }
@@ -2090,7 +2151,7 @@ void nrf_802154_trx_receive_frame_received(void)
                 mp_current_rx_buffer->free = false;
 
                 state_set(RADIO_STATE_RX);
-                rx_init();
+                (void)rx_init(TRX_RAMP_UP_SW_TRIGGER);
 
                 received_frame_notify_and_nesting_allow(p_received_data);
             }
@@ -2108,14 +2169,14 @@ void nrf_802154_trx_receive_frame_received(void)
                 // Find new buffer
                 rx_buffer_in_use_set(nrf_802154_rx_buffer_free_find());
 
-                rx_init();
+                (void)rx_init(TRX_RAMP_UP_SW_TRIGGER);
 
                 received_frame_notify_and_nesting_allow(p_received_data);
             }
             else
             {
                 // Receive to the same buffer
-                rx_init();
+                (void)rx_init(TRX_RAMP_UP_SW_TRIGGER);
             }
         }
     }
@@ -2125,7 +2186,7 @@ void nrf_802154_trx_receive_frame_received(void)
         // or problem due to software latency (i.e. handled BCMATCH, CRCERROR, CRCOK from two
         // consecutively received frames).
         request_preconditions_for_state(m_state);
-        rx_init();
+        (void)rx_init(TRX_RAMP_UP_SW_TRIGGER);
 
 #if NRF_802154_DISABLE_BCC_MATCHING
         if ((p_received_data[FRAME_TYPE_OFFSET] & FRAME_TYPE_MASK) != FRAME_TYPE_ACK)
@@ -2181,7 +2242,7 @@ void nrf_802154_trx_transmit_ack_transmitted(void)
 
     state_set(RADIO_STATE_RX);
 
-    rx_init();
+    (void)rx_init(TRX_RAMP_UP_SW_TRIGGER);
 
     received_frame_notify_and_nesting_allow(p_received_data);
 
@@ -2273,7 +2334,7 @@ void nrf_802154_trx_transmit_frame_transmitted(void)
     {
         state_set(RADIO_STATE_RX);
 
-        rx_init();
+        (void)rx_init(TRX_RAMP_UP_SW_TRIGGER);
 
         transmitted_frame_notify(NULL, 0, 0);
     }
@@ -2389,7 +2450,7 @@ static void on_bad_ack(void)
     // We received either a frame with incorrect CRC or not an ACK frame or not matching ACK
     state_set(RADIO_STATE_RX);
 
-    rx_init();
+    (void)rx_init(TRX_RAMP_UP_SW_TRIGGER);
 
     nrf_802154_transmit_done_metadata_t metadata = {};
 
@@ -2428,7 +2489,7 @@ void nrf_802154_trx_receive_ack_received(void)
         mp_current_rx_buffer->free = false;
 
         state_set(RADIO_STATE_RX);
-        rx_init();
+        (void)rx_init(TRX_RAMP_UP_SW_TRIGGER);
 
         transmitted_frame_notify(p_ack_buffer->data,           // phr + psdu
                                  rssi_last_measurement_get(),  // rssi
@@ -2447,7 +2508,7 @@ void nrf_802154_trx_standalone_cca_finished(bool channel_was_idle)
     nrf_802154_log_function_enter(NRF_802154_LOG_VERBOSITY_LOW);
 
     state_set(RADIO_STATE_RX);
-    rx_init();
+    (void)rx_init(TRX_RAMP_UP_SW_TRIGGER);
 
     cca_notify(channel_was_idle);
 
@@ -2500,7 +2561,7 @@ void nrf_802154_trx_transmit_frame_ccabusy(void)
 #endif
 
     state_set(RADIO_STATE_RX);
-    rx_init();
+    (void)rx_init(TRX_RAMP_UP_SW_TRIGGER);
 
     nrf_802154_transmit_done_metadata_t metadata = {};
 
@@ -2543,7 +2604,7 @@ void nrf_802154_trx_energy_detection_finished(uint8_t ed_sample)
         nrf_802154_trx_channel_set(nrf_802154_pib_channel_get());
 
         state_set(RADIO_STATE_RX);
-        rx_init();
+        (void)rx_init(TRX_RAMP_UP_SW_TRIGGER);
 
         energy_detected_notify(nrf_802154_rssi_ed_sample_convert(m_ed_result));
 
@@ -2579,8 +2640,8 @@ void nrf_802154_core_deinit(void)
 
     mpsl_fem_cleanup();
 
-    nrf_802154_irq_disable(RADIO_IRQn);
-    nrf_802154_irq_clear_pending(RADIO_IRQn);
+    nrf_802154_irq_disable(nrfx_get_irq_number(NRF_RADIO));
+    nrf_802154_irq_clear_pending(nrfx_get_irq_number(NRF_RADIO));
 
     nrf_802154_sl_timer_deinit(&m_rx_prestarted_timer);
 
@@ -2650,9 +2711,20 @@ bool nrf_802154_core_receive(nrf_802154_term_t              term_lvl,
                 {
                     m_trx_receive_frame_notifications_mask =
                         make_trx_frame_receive_notification_mask();
+
                     m_rx_window_id = id;
                     state_set(RADIO_STATE_RX);
-                    rx_init();
+
+                    bool need_to_abort = rx_init(ramp_up_mode_choose(req_orig));
+
+                    if (need_to_abort)
+                    {
+                        nrf_802154_trx_abort();
+
+                        // HW triggering failed, fallback is SW trigger.
+                        // (fallback immunizes against the rare case of spurious lptimer firing)
+                        (void)rx_init(TRX_RAMP_UP_SW_TRIGGER);
+                    }
                 }
             }
             else
@@ -2711,18 +2783,19 @@ bool nrf_802154_core_transmit(nrf_802154_term_t              term_lvl,
                 m_flags.tx_diminished_prio =
                     m_coex_tx_request_mode == NRF_802154_COEX_TX_REQUEST_MODE_CCA_DONE;
 
-                state_set(p_params->cca ? RADIO_STATE_CCA_TX : RADIO_STATE_TX);
                 mp_tx_data = p_data;
+                state_set(p_params->cca ? RADIO_STATE_CCA_TX : RADIO_STATE_TX);
                 m_tx_power = p_params->tx_power;
 
                 // coverity[check_return]
-                result = tx_init(p_data, p_params->cca);
+                result = tx_init(p_data, ramp_up_mode_choose(req_orig), p_params->cca);
+
                 if (p_params->immediate)
                 {
                     if (!result)
                     {
                         state_set(RADIO_STATE_RX);
-                        rx_init();
+                        (void)rx_init(TRX_RAMP_UP_SW_TRIGGER);
                     }
                 }
                 else
@@ -2908,7 +2981,7 @@ bool nrf_802154_core_channel_update(req_originator_t req_orig)
             case RADIO_STATE_RX:
                 if (current_operation_terminate(NRF_802154_TERM_802154, req_orig, true))
                 {
-                    rx_init();
+                    (void)rx_init(TRX_RAMP_UP_SW_TRIGGER);
                 }
                 break;
 

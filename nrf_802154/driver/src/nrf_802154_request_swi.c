@@ -58,7 +58,7 @@
 #include "mac_features/nrf_802154_delayed_trx.h"
 #include "platform/nrf_802154_irq.h"
 
-#include <nrf.h>
+#include <nrfx.h>
 
 /** Size of requests queue.
  *

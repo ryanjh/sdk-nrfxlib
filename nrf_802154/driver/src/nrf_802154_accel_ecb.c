@@ -33,13 +33,15 @@
  */
 
 #include "nrf_802154_aes_ccm.h"
+#include "nrf_802154_config.h"
+
+#if NRF_802154_ACCELERATOR_ECB
 
 #include <assert.h>
 #include <string.h>
 
 #include "hal/nrf_ecb.h"
 #include "nrf_802154_const.h"
-#include "nrf_802154_config.h"
 #include "nrf_802154_tx_work_buffer.h"
 #include "platform/nrf_802154_irq.h"
 
@@ -576,3 +578,5 @@ void nrf_802154_aes_ccm_transform_abort(uint8_t * p_frame)
 
     m_aes_ccm_data.raw_frame = NULL;
 }
+
+#endif // NRF_802154_CONFIG_ACCEL_ECB
