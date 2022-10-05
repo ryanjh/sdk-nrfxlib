@@ -37,7 +37,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <nrf.h>
+#include <nrfx.h>
 
 #ifdef __cplusplus
 extern "C" {

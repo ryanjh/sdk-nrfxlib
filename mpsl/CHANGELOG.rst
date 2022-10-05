@@ -12,6 +12,16 @@ Main branch
 
 All the notable changes included in the main branch are documented in this section.
 
+Added
+=====
+
+* Support for the nRF21540 GPIO & SPI front-end module.
+  SPI is used to set Tx gain of the nRF21540 in runtime.
+  Support for this mode of operation for nRF21540 with Bluetooth LE is experimental.
+* Support for adding an optional external model used to split the requested transmit power into components.
+  This is then used by :c:func:`mpsl_fem_tx_power_split`. (KRKNWK-14464)
+* An experimental version of a built-in nRF21540 GPIO & SPI front-end module compensation model.
+
 Changes
 =======
 
@@ -20,6 +30,12 @@ Changes
   Previously the value needed to be adjusted before applying to the RADIO peripheral. (KRKNWK-14323)
 * Changed :c:struct:`mpsl_fem_gpiote_pin_config_t` and :c:struct:`mpsl_fem_gpio_pin_config_t` to require GPIO port address, port number and relative pin number instead of the absolute pin number. (KRKNWK-11891)
 * Added production support for the 1-wire coexistence interface on the Nordic nRF52 Series. (DRGN-16439)
+* Added :c:func:`mpsl_clock_hfclk_latency_set` which may be used to communicate the true high-frequency oscillator ramp-up time to MPSL.
+  When not used, MPSL will make a worst-case assumption. (DRGN-13559)
+* Added :c:func:`mpsl_tx_power_radio_supported_power_adjust` which lets users adjust the TX power to a value supported by the radio peripheral. (KRKNWK-14770)
+* Changed :c:func:`mpsl_fem_tx_power_split` so that the returned front-end module gain component is a structure containing the gain in dB and a front-end module implementation specific private setting.
+  Changed :c:func:`mpsl_fem_pa_gain_set` to accept this structure and apply the settings that it stores.
+* Changed :c:func:`mpsl_fem_tx_power_split` to return the real achieved output power.
 
 nRF Connect SDK v2.0.0
 **********************

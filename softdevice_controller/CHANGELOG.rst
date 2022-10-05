@@ -20,6 +20,7 @@ Added
 * Support for changing the radio transmitter's default power level using :c:func:`sdc_default_tx_power_set` (DRGN-15903).
 * Support for disabling or enabling peripheral latency using :c:func:`sdc_hci_cmd_vs_peripheral_latency_mode_set` (DRGN-15706).
 * Stub version of :c:func:`sdc_hci_get` for getting all types of HCI packets from the Link Layer (DRGN-17060).
+* Experimental support for generic coex (DRGN-17128).
 
 Changes
 =======
@@ -39,6 +40,9 @@ Changes
   These changes reduce the code size when using only central or peripheral role. (DRGN-17592)
 * Applications may now configure fewer TX/RX buffers than the default.
   Note that this may lead to reduced throughput (DRGN-17651).
+* The scanner is now scheduling cooperatively when the sum of scan windows is equal to the scan interval.
+  This improves scheduling performance when scanning concurrently on multiple PHYs (DRGN-17754).
+* Improved scheduling performance when synchronized to a periodic advertiser sending packets on Coded PHY (DRGN-17754).
 
 Bug fixes
 =========
@@ -46,6 +50,8 @@ Bug fixes
 * Fixed a HardFault that could occur when receiving legacy PDUs while using the periodic advertising synchronization functionality (DRGN-17656).
 * Fixed an issue where the maximum data length capabilities were set to 27 bytes when the configured event length (:kconfig:option:`CONFIG_BT_CTLR_SDC_MAX_CONN_EVENT_LEN_DEFAULT`) was more than 65535 us (DRGN-17454).
 * Fixed an issue where using the memory macros in :file:`sdc.h` with fewer TX/RX buffers than the default would report incorrect memory usage (DRGN-17651).
+* Fixed an issue where the periodic advertiser sends its AUX_SYNC_IND 40 us later than indicated in the SyncInfo of the AUX_ADV_IND packet (DRGN-17710).
+* Fixed an issue where the scanner would attempt to receive the first AUX_SYNC_IND 40 us later than indicated in the SyncInfo of the AUX_ADV_IND packet (DRGN-17710).
 
 nRF Connect SDK v2.0.0
 **********************

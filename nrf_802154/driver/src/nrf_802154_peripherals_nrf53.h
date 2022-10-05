@@ -40,7 +40,6 @@
 #ifndef NRF_802154_PERIPHERALS_NRF53_H__
 #define NRF_802154_PERIPHERALS_NRF53_H__
 
-#include <nrf.h>
 #include <nrfx.h>
 #include "nrf_802154_config.h"
 #include "nrf_802154_debug.h"
@@ -93,6 +92,20 @@ extern "C" {
  */
 #define NRF_802154_EGU_IRQN \
     NRFX_CONCAT_3(EGU, NRF_802154_EGU_INSTANCE_NO, _IRQn)
+
+/**
+ * @def NRF_802154_EGU_RAMP_UP_EVENT
+ *
+ * The EGU event used by the driver to trigger radio ramp-up.
+ */
+#define NRF_802154_EGU_RAMP_UP_EVENT NRF_EGU_EVENT_TRIGGERED15
+
+/**
+ * @def NRF_802154_EGU_RAMP_UP_TASK
+ *
+ * The EGU task used by the driver to trigger radio ramp-up.
+ */
+#define NRF_802154_EGU_RAMP_UP_TASK  NRF_EGU_TASK_TRIGGER15
 
 /**
  * @def NRF_802154_EGU_USED_MASK
@@ -241,6 +254,15 @@ extern "C" {
 #endif  // NRF_802154_TEST_MODES_ENABLED
 
 /**
+ * @def NRF_802154_DPPI_RADIO_CCABUSY
+ *
+ * The DPPI channel that triggers radio
+ */
+#ifndef NRF_802154_DPPI_RADIO_HW_TRIGGER
+#define NRF_802154_DPPI_RADIO_HW_TRIGGER 15U
+#endif
+
+/**
  * @def NRF_802154_DPPI_TIMESTAMPS_USED_MASK
  *
  * Helper bit mask of DPPI channels used by the 802.15.4 driver for timestamping.
@@ -269,6 +291,7 @@ extern "C" {
         (1UL << NRF_802154_DPPI_TIMER_COMPARE_TO_RADIO_TXEN) | \
         (1UL << NRF_802154_DPPI_RADIO_SYNC_TO_EGU_SYNC) |      \
         (1UL << NRF_802154_DPPI_RADIO_CCAIDLE) |               \
+        (1UL << NRF_802154_DPPI_RADIO_HW_TRIGGER) |            \
         NRF_802154_DPPI_RADIO_TEST_MODE_USED_MASK |            \
         NRF_802154_DPPI_TIMESTAMPS_USED_MASK)
 #endif // NRF_802154_DPPI_CHANNELS_USED_MASK

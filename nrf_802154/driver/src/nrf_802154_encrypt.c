@@ -40,7 +40,7 @@
 #include "nrf_802154_aes_ccm.h"
 #include "nrf_802154_const.h"
 #include "nrf_802154_pib.h"
-#include "nrf_802154_types.h"
+#include "nrf_802154_types_internal.h"
 #include "mac_features/nrf_802154_frame_parser.h"
 #include "mac_features/nrf_802154_security_pib.h"
 
@@ -301,7 +301,8 @@ bool nrf_802154_encrypt_ack_prepare(const nrf_802154_frame_parser_data_t * p_ack
     nrf_802154_aes_ccm_data_t aes_ccm_data;
     bool                      success = false;
 
-    if (!nrf_802154_frame_parser_security_enabled_bit_is_set(p_ack_data))
+    if (!nrf_802154_frame_parser_security_enabled_bit_is_set(p_ack_data) ||
+        (nrf_802154_frame_parser_sec_ctrl_sec_lvl_get(p_ack_data) == SECURITY_LEVEL_NONE))
     {
         success = true;
     }
@@ -347,7 +348,8 @@ bool nrf_802154_encrypt_tx_setup(
     assert(success);
     (void)success;
 
-    if (!nrf_802154_frame_parser_security_enabled_bit_is_set(&frame_data))
+    if (!nrf_802154_frame_parser_security_enabled_bit_is_set(&frame_data) ||
+        (nrf_802154_frame_parser_sec_ctrl_sec_lvl_get(&frame_data) == SECURITY_LEVEL_NONE))
     {
         success = true;
     }

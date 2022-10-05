@@ -77,7 +77,7 @@ static uint8_t m_be;                                      ///< Backoff exponent,
 
 static uint8_t                            * mp_data;      ///< Pointer to a buffer containing PHR and PSDU of the frame being transmitted.
 static nrf_802154_transmitted_frame_props_t m_data_props; ///< Structure containing detailed properties of data in buffer.
-static nrf_802154_tx_power_split_t          m_tx_power;   ///< Power to be used when transmitting the frame split into components.
+static nrf_802154_fal_tx_power_split_t      m_tx_power;   ///< Power to be used when transmitting the frame split into components.
 static csma_ca_state_t                      m_state;      ///< The current state of the CSMA-CA procedure.
 
 /**
@@ -271,6 +271,7 @@ static void random_backoff_start(void)
     rsch_dly_ts_param_t backoff_ts_param =
     {
         .trigger_time     = nrf_802154_sl_timer_current_time_get() + backoff_us,
+        .ppi_trigger_en   = false,
         .op               = RSCH_DLY_TS_OP_CSMACA,
         .type             = RSCH_DLY_TS_TYPE_RELAXED,
         .started_callback = frame_transmit,
