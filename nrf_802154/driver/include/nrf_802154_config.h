@@ -39,7 +39,7 @@
 #include NRF_802154_PROJECT_CONFIG
 #endif
 
-#include <nrfx.h>
+#include <nrf.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -527,33 +527,6 @@ extern "C" {
  */
 #ifndef NRF_802154_ENCRYPTION_ENABLED
 #define NRF_802154_ENCRYPTION_ENABLED 1
-#endif
-
-
-/**
- * @def NRF_802154_ACCELERATOR_CCM
- *
- * Selects CCM peripheral to be used as an accelerator for on-the-fly CCM encryption.
- */
-#ifndef NRF_802154_ACCELERATOR_CCM
-#ifdef HALTIUM_XXAA
-#define NRF_802154_ACCELERATOR_CCM 1
-#else
-#define NRF_802154_ACCELERATOR_CCM 0
-#endif
-#endif
-
-/**
- * @def NRF_802154_ACCELERATOR_ECB
- *
- * Selects ECB peripheral to be used as an accelerator for on-the-fly CCM encryption.
- */
-#ifndef NRF_802154_ACCELERATOR_ECB
-#ifdef HALTIUM_XXAA
-#define NRF_802154_ACCELERATOR_ECB 0
-#else
-#define NRF_802154_ACCELERATOR_ECB 1
-#endif
 #endif
 
 /**

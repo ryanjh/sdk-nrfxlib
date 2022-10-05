@@ -42,7 +42,7 @@
 
 #include <stdint.h>
 
-#include "nrfx.h"
+#include "nrf.h"
 #include "hal/nrf_gpio.h"
 #include "hal/nrf_gpiote.h"
 #include "hal/nrf_ppi.h"

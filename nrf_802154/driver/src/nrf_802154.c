@@ -156,9 +156,11 @@ void nrf_802154_tx_power_set(int8_t power)
 
 int8_t nrf_802154_tx_power_get(void)
 {
-    nrf_802154_fal_tx_power_split_t split_power = {0};
+    nrf_802154_tx_power_split_t split_power = {0};
 
-    return nrf_802154_tx_power_split_pib_power_get(&split_power);
+    (void)nrf_802154_tx_power_split_pib_power_get(&split_power);
+
+    return split_power.fem_gain + split_power.radio_tx_power;
 }
 
 bool nrf_802154_coex_rx_request_mode_set(nrf_802154_coex_rx_request_mode_t mode)

@@ -38,10 +38,11 @@
  *
  */
 
-#include "nrfx.h"
 #include "nrf_802154_debug.h"
 
 #include <stdint.h>
+
+#include "nrf.h"
 
 void __assert_func(const char * file, int line, const char * func, const char * cond)
 {

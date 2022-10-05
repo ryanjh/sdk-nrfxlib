@@ -51,9 +51,8 @@
 #include "rsch/nrf_802154_rsch.h"
 #include "platform/nrf_802154_platform_sl_lptimer.h"
 #include "platform/nrf_802154_irq.h"
-#include "hal/nrf_radio.h"
 
-#include <nrfx.h>
+#include <nrf.h>
 
 #define CMSIS_IRQ_NUM_VECTACTIVE_DIFF                 16
 
@@ -75,7 +74,7 @@ static void radio_critical_section_enter(void)
 {
     if (nrf_802154_rsch_prec_is_approved(RSCH_PREC_RAAL, RSCH_PRIO_MIN_APPROVED))
     {
-        nrf_802154_irq_disable(nrfx_get_irq_number(NRF_RADIO));
+        nrf_802154_irq_disable(RADIO_IRQn);
     }
 }
 
@@ -88,7 +87,7 @@ static void radio_critical_section_exit(void)
 {
     if (nrf_802154_rsch_prec_is_approved(RSCH_PREC_RAAL, RSCH_PRIO_MIN_APPROVED))
     {
-        nrf_802154_irq_enable(nrfx_get_irq_number(NRF_RADIO));
+        nrf_802154_irq_enable(RADIO_IRQn);
     }
 }
 

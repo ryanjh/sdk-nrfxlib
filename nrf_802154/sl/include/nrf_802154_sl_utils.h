@@ -43,7 +43,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "nrfx.h"
+#include "nrf.h"
 
 /**@brief RTC clock frequency. */
 #define NRF_802154_SL_RTC_FREQUENCY               32768UL

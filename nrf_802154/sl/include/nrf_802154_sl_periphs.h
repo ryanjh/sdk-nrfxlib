@@ -40,7 +40,13 @@
 #ifndef NRF_802154_SL_PERIPHS_H__
 #define NRF_802154_SL_PERIPHS_H__
 
+#include <nrf.h>
 #include <nrfx.h>
+#if defined(DPPI_PRESENT)
+#include "hal/nrf_dppi.h"
+#else
+#include "hal/nrf_ppi.h"
+#endif
 
 /**
  * @def NRF_802154_EGU_INSTANCE_NO
@@ -50,11 +56,7 @@
  *
  */
 #ifndef NRF_802154_EGU_INSTANCE_NO
-#ifndef HALTIUM_XXAA
 #define NRF_802154_EGU_INSTANCE_NO 0
-#else
-#define NRF_802154_EGU_INSTANCE_NO 020
-#endif
 #endif
 
 /**
@@ -125,9 +127,7 @@
  *
  */
 #ifndef NRF_802154_HIGH_PRECISION_TIMER_INSTANCE_NO
-#ifndef HALTIUM_XXAA
 #define NRF_802154_HIGH_PRECISION_TIMER_INSTANCE_NO 1
-#endif
 #endif
 
 /**

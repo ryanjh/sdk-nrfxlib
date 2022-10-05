@@ -37,7 +37,7 @@
 #include <string.h>
 
 #ifndef TEST
-#include <nrfx.h>
+#include <nrf.h>
 #endif
 
 #include "../spinel_base/spinel.h"

@@ -44,8 +44,7 @@ target_include_directories(nrf-802154-driver
 target_sources(nrf-802154-driver
   PRIVATE
     src/nrf_802154.c
-    src/nrf_802154_accel_ecb.c
-    src/nrf_802154_accel_ccm.c
+    src/nrf_802154_aes_ccm.c
     src/nrf_802154_core.c
     src/nrf_802154_core_hooks.c
     src/nrf_802154_critical_section.c
@@ -98,8 +97,6 @@ if (SL_OPENSOURCE)
     INTERFACE
       # Disable Frame Timestamps
       NRF_802154_FRAME_TIMESTAMP_ENABLED=0
-      # Disable total times measurement
-      NRF_802154_TOTAL_TIMES_MEASUREMENT_ENABLED=0
       # Disable DTRX
       NRF_802154_DELAYED_TRX_ENABLED=0
       # Disable IFS

@@ -68,9 +68,7 @@ void nrf_802154_timer_coord_stop(void)
 
 void nrf_802154_sl_timer_module_init(void)
 {
-#ifndef HALTIUM_XXAA
     BUILD_ASSERT(CONFIG_SYS_CLOCK_TICKS_PER_SEC == NRF_802154_SL_RTC_FREQUENCY);
-#endif
 }
 
 void nrf_802154_sl_timer_module_uninit(void)

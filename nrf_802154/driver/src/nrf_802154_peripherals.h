@@ -40,6 +40,7 @@
 #ifndef NRF_802154_PERIPHERALS_H__
 #define NRF_802154_PERIPHERALS_H__
 
+#include <nrf.h>
 #include <nrfx.h>
 #include "nrf_802154_config.h"
 #include "nrf_802154_debug.h"
@@ -49,8 +50,6 @@
 #include "nrf_802154_peripherals_nrf52.h"
 #elif defined(NRF5340_XXAA)
 #include "nrf_802154_peripherals_nrf53.h"
-#elif defined(HALTIUM_XXAA)
-#include "nrf_802154_peripherals_haltium.h"
 #else
 #error Unsupported chip family
 #endif

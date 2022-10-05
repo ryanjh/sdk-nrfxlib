@@ -41,7 +41,6 @@
 #define NRF_802154_FAL_H_
 
 #include <stdint.h>
-#include "protocol/mpsl_fem_protocol_api.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,8 +51,8 @@ extern "C" {
  */
 typedef struct
 {
-    int8_t          radio_tx_power; // !< TX power in dBm to be applied to the RADIO peripheral.
-    mpsl_fem_gain_t fem;            // !< Data needed to set the FEM gain
+    int8_t radio_tx_power; // !< TX power in dBm to be applied to the RADIO peripheral.
+    int8_t fem_gain;       // !< Gain of the Front-End Module in dB.
 } nrf_802154_fal_tx_power_split_t;
 
 /** @brief Splits transmit power value into components to be applied on each stage on the transmit path.
@@ -64,11 +63,11 @@ typedef struct
  * @param[in]  power            TX power in dBm requested for transmission on air.
  * @param[out] p_tx_power_split Components of tx_power to be applied for stages on transmit path.
  *
- * @returns The real achieved total transmission power in dBm.
+ * @returns Always 0.
  */
-int8_t nrf_802154_fal_tx_power_split(const uint8_t                           channel,
-                                     const int8_t                            power,
-                                     nrf_802154_fal_tx_power_split_t * const p_tx_power_split);
+int32_t nrf_802154_fal_tx_power_split(const uint8_t                           channel,
+                                      const int8_t                            power,
+                                      nrf_802154_fal_tx_power_split_t * const p_tx_power_split);
 
 #ifdef __cplusplus
 }
