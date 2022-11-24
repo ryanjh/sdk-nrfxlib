@@ -219,6 +219,7 @@ void nrf_802154_trx_cca_configuration_update(void);
  * @param[in] p_ack_tx_power Selects the power which should be used to transmitted an ACK if required.
  */
 void nrf_802154_trx_receive_frame(uint8_t                                 bcc,
+                                  nrf_802154_trx_ramp_up_trigger_mode_t   rampup_trigg_mode,
                                   nrf_802154_trx_receive_notifications_t  notifications_mask,
                                   const nrf_802154_fal_tx_power_split_t * p_ack_tx_power);
 

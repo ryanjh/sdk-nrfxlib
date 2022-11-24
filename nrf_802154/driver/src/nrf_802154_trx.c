@@ -204,6 +204,8 @@ static nrf_802154_flags_t m_flags; ///< Flags used to store the current driver s
 static volatile uint32_t m_timer_value_on_radio_end_event;
 static volatile bool     m_transmit_with_cca;
 
+static void timer_frequency_set_1mhz(void);
+
 static void rxframe_finish_disable_ppis(void);
 static void rxack_finish_disable_ppis(void);
 static void txframe_finish_disable_ppis(bool cca);
@@ -1102,6 +1104,7 @@ bool nrf_802154_trx_receive_buffer_set(void * p_receive_buffer)
 }
 
 void nrf_802154_trx_receive_frame(uint8_t                                 bcc,
+                                  nrf_802154_trx_ramp_up_trigger_mode_t   rampup_trigg_mode,
                                   nrf_802154_trx_receive_notifications_t  notifications_mask,
                                   const nrf_802154_fal_tx_power_split_t * p_ack_tx_power)
 {
