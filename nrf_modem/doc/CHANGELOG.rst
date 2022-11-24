@@ -9,6 +9,16 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
+nrf_modem 2.1.3
+***************
+
+* Fixed a bug that prevented the GNSS API from correctly re-initializing after a modem fault.
+
+nrf_modem 2.1.2
+***************
+
+* Fixed a bug where, in rare cases, the :c:func:`nrf_modem_trace_get` function could report the trace length incorrectly.
+
 nrf_modem 2.1.1
 ***************
 
