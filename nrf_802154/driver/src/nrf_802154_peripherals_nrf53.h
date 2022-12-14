@@ -94,6 +94,14 @@ extern "C" {
     NRFX_CONCAT_3(EGU, NRF_802154_EGU_INSTANCE_NO, _IRQn)
 
 /**
+ * @def NRF_802154_DPPIC_INSTANCE
+ *
+ * The DPPIC instance used by the driver to connect peripherals to radio.
+ *
+ */
+#define NRF_802154_DPPIC_INSTANCE    NRF_DPPIC
+
+/**
  * @def NRF_802154_EGU_RAMP_UP_EVENT
  *
  * The EGU event used by the driver to trigger radio ramp-up.

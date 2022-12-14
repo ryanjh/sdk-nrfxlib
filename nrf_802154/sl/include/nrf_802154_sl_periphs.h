@@ -50,10 +50,12 @@
  *
  */
 #ifndef NRF_802154_EGU_INSTANCE_NO
-#ifndef HALTIUM_XXAA
-#define NRF_802154_EGU_INSTANCE_NO 0
-#else
+#ifdef HALTIUM_XXAA
 #define NRF_802154_EGU_INSTANCE_NO 020
+#elif MOONLIGHT_XXAA
+#define NRF_802154_EGU_INSTANCE_NO 10
+#else
+#define NRF_802154_EGU_INSTANCE_NO 0
 #endif
 #endif
 
@@ -66,7 +68,27 @@
  * @note This option is used by the core module regardless of the driver configuration.
  *
  */
-#define NRF_802154_EGU_INSTANCE          NRFX_CONCAT_2(NRF_EGU, NRF_802154_EGU_INSTANCE_NO)
+#define NRF_802154_EGU_INSTANCE NRFX_CONCAT_2(NRF_EGU, NRF_802154_EGU_INSTANCE_NO)
+
+/**
+ * @def NRF_802154_SL_DPPIC_INSTANCE_NO
+ *
+ * Id of the DPPIC instance used by the driver to connect peripherals to radio.
+ *
+ */
+#ifdef MOONLIGHT_XXAA
+#define NRF_802154_SL_DPPIC_INSTANCE_NO 10
+#elif HALTIUM_XXAA
+#define NRF_802154_SL_DPPIC_INSTANCE_NO 020
+#endif
+
+/**
+ * @def NRF_802154_SL_DPPIC_INSTANCE
+ *
+ * The DPPIC instance used by the driver to connect peripherals to radio.
+ *
+ */
+#define NRF_802154_SL_DPPIC_INSTANCE     NRFX_CONCAT_2(NRF_DPPIC, NRF_802154_SL_DPPIC_INSTANCE_NO)
 
 /**
  * @def NRF_802154_EGU_TIMESTAMP_CHANNEL

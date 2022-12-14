@@ -270,7 +270,8 @@ void nrf_timer_init(void)
 static void timer_frequency_set_1mhz(void)
 {
     uint32_t base_frequency = NRF_TIMER_BASE_FREQUENCY_GET(NRF_802154_TIMER_INSTANCE);
-    uint32_t prescaler = 31 - NRF_CLZ(base_frequency / 1000000);
+    uint32_t prescaler      = 31 - NRF_CLZ(base_frequency / 1000000);
+
     nrf_timer_prescaler_set(NRF_802154_TIMER_INSTANCE, prescaler);
 }
 
@@ -279,7 +280,7 @@ static void nrf_radio_reset(void)
 {
     nrf_802154_log_function_enter(NRF_802154_LOG_VERBOSITY_LOW);
 
-#if defined(RADIO_POWER_POWER_Msk)
+#if defined(RADIO_POWER_POWER_Msk) && !defined(MOONLIGHT_XXAA)
     nrf_radio_power_set(NRF_RADIO, false);
     nrf_radio_power_set(NRF_RADIO, true);
 #else // https://projecttools.nordicsemi.no/jira/browse/HM-12306
@@ -686,18 +687,21 @@ void nrf_802154_trx_enable(void)
     packet_conf.maxlen = MAX_PACKET_SIZE;
     nrf_radio_packet_configure(NRF_RADIO, &packet_conf);
 
-#ifndef HALTIUM_XXAA
-    nrf_radio_modecnf0_set(NRF_RADIO, true, 0);
-#else
+#if defined(HALTIUM_XXAA) || defined(MOONLIGHT_XXAA)
     NRF_RADIO->TIMING     |= RADIO_TIMING_RU_Msk; // Enable fast ramp-up.
     NRF_RADIO->QOVERRIDE27 = 0;
 
     uint32_t temp;
-    temp = NRF_RADIO->DBCORRADAP & ~RADIO_DBCORRADAP_TH_Msk;
+
+    temp                  = NRF_RADIO->DBCORRADAP & ~RADIO_DBCORRADAP_TH_Msk;
     NRF_RADIO->DBCORRADAP = temp | (0x2d << RADIO_DBCORRADAP_TH_Pos);
 
-    temp = NRF_RADIO->ADDRWINSIZE & ~RADIO_ADDRWINSIZE_IEEE802154_Msk;
+    temp                   = NRF_RADIO->ADDRWINSIZE & ~RADIO_ADDRWINSIZE_IEEE802154_Msk;
     NRF_RADIO->ADDRWINSIZE = temp | (0x18 << RADIO_ADDRWINSIZE_IEEE802154_Pos);
+#elif defined(MOONLIGHT_XXAA)
+    NRF_RADIO->TIMING |= RADIO_TIMING_RU_Msk; // Enable fast ramp-up.
+#else
+    nrf_radio_modecnf0_set(NRF_RADIO, true, 0);
 #endif
 
     // Configure CRC
@@ -805,17 +809,16 @@ void nrf_802154_trx_disable(void)
 
     if (m_trx_state != TRX_STATE_DISABLED)
     {
-#if defined(RADIO_POWER_POWER_Msk)
+#if defined(RADIO_POWER_POWER_Msk) && !defined(MOONLIGHT_XXAA)
         nrf_radio_power_set(NRF_RADIO, false);
 #endif
-
 
         nrf_802154_irq_clear_pending(nrfx_get_irq_number(NRF_RADIO));
 
         /* While the RADIO is powered off deconfigure any PPIs used directly by trx module */
         ppi_all_clear();
 
-#if !defined(RADIO_POWER_POWER_Msk)
+#if !defined(RADIO_POWER_POWER_Msk) || defined(MOONLIGHT_XXAA)
         nrf_radio_task_trigger(NRF_RADIO, NRF_RADIO_TASK_DISABLE);
         wait_until_radio_is_disabled();
         nrf_radio_reset();
@@ -832,7 +835,7 @@ void nrf_802154_trx_disable(void)
                                  NRF_TIMER_SHORT_COMPARE1_STOP_MASK);
         nrf_timer_task_trigger(NRF_802154_TIMER_INSTANCE, NRF_TIMER_TASK_SHUTDOWN);
 
-#if defined(RADIO_POWER_POWER_Msk)
+#if defined(RADIO_POWER_POWER_Msk) && !defined(MOONLIGHT_XXAA)
         nrf_radio_power_set(NRF_RADIO, true);
 #endif
 
@@ -1309,7 +1312,7 @@ bool nrf_802154_trx_rssi_measure(void)
                 m_flags.rssi_settled = true;
             }
 
-#ifndef HALTIUM_XXAA
+#if !defined(HALTIUM_XXAA) && !defined(MOONLIGHT_XXAA)
             nrf_radio_event_clear(NRF_RADIO, NRF_RADIO_EVENT_RSSIEND);
 #endif
             nrf_radio_task_trigger(NRF_RADIO, NRF_RADIO_TASK_RSSISTART);
@@ -1343,7 +1346,7 @@ uint8_t nrf_802154_trx_rssi_last_sample_get(void)
 
 bool nrf_802154_trx_rssi_sample_is_available(void)
 {
-#ifndef HALTIUM_XXAA
+#if !defined(HALTIUM_XXAA) && !defined(MOONLIGHT_XXAA)
     return nrf_radio_event_check(NRF_RADIO, NRF_RADIO_EVENT_RSSIEND);
 #else
     return true;
@@ -1557,7 +1560,7 @@ bool nrf_802154_trx_transmit_ack(const void * p_transmit_buffer, uint32_t delay_
     }
     else
     {
-#ifndef HALTIUM_XXAA
+#if !defined(HALTIUM_XXAA)
         /* We were to late with setting up PPI_TIMER_ACK, ack transmission was not triggered and
          * will not be triggered in future.
          */
@@ -2249,7 +2252,7 @@ static void irq_handler_bcmatch(void)
 
     uint8_t current_bcc;
     uint8_t next_bcc;
-    bool should_repeat;
+    bool    should_repeat;
 
     assert(m_trx_state == TRX_STATE_RXFRAME);
 
@@ -2257,7 +2260,8 @@ static void irq_handler_bcmatch(void)
 
     current_bcc = nrf_radio_bcc_get(NRF_RADIO) / 8U;
 
-#ifdef HALTIUM_XXAA
+#if defined(HALTIUM_XXAA)
+
     /*
      * FPGA workaround. The FPGA is too slow to set the BCC register on time.
      * Wait for full frame and perform BCC in steps.
@@ -2278,7 +2282,7 @@ static void irq_handler_bcmatch(void)
             return;
         }
 
-#ifdef HALTIUM_XXAA
+#if defined(HALTIUM_XXAA)
         nrf_radio_event_clear(NRF_RADIO, NRF_RADIO_EVENT_BCMATCH);
 #endif
 
@@ -2287,16 +2291,17 @@ static void irq_handler_bcmatch(void)
         if (next_bcc > current_bcc)
         {
             /* Note: If we don't make it before given octet is received by RADIO bcmatch will not be triggered.
-            * The fact that filtering may be not completed at the call to nrf_802154_trx_receive_received handler
-            * should be handled by the handler.
-            */
+             * The fact that filtering may be not completed at the call to nrf_802154_trx_receive_received handler
+             * should be handled by the handler.
+             */
             nrf_radio_bcc_set(NRF_RADIO, next_bcc * 8);
-#ifdef HALTIUM_XXAA
+#if defined(HALTIUM_XXAA)
             should_repeat = true;
-            current_bcc = next_bcc;
+            current_bcc   = next_bcc;
 #endif
         }
-    } while (should_repeat);
+    }
+    while (should_repeat);
 
     nrf_802154_log_function_exit(NRF_802154_LOG_VERBOSITY_LOW);
 }
@@ -2471,9 +2476,6 @@ static void txack_finish(void)
      * stopped now, and there is no PPIs starting it automatically by the hardware.
      */
     nrf_802154_trx_ppi_for_ack_tx_clear();
-
-    // TODO: Figure out why short doesn't disable radio after sending the ACK
-    nrf_radio_task_trigger(NRF_RADIO, NRF_RADIO_TASK_DISABLE);
 
     nrf_radio_shorts_set(NRF_RADIO, SHORTS_IDLE);
 

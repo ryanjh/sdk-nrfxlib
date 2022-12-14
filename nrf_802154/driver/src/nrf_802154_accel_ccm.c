@@ -47,8 +47,12 @@
 #include "nrf_802154_peripherals.h"
 #include "nrf_802154_utils_byteorder.h"
 #include "platform/nrf_802154_irq.h"
+#include "hal/nrf_dppi.h"
+#include "hal/nrf_ppib.h"
 
-#define CCM_EMPTY_POINTER (void *)0x00000001
+#if !defined(MOONLIGHT_XXAA)
+#include "hal/nrf_spu.h"
+#endif
 
 typedef struct
 {
@@ -60,39 +64,38 @@ typedef struct
     struct
     {
         uint16_t alen;
-        uint8_t  mlen_lsb;
-        uint8_t  mlen_msb;
+        uint16_t mlen;
     } out;
 } ccm_params_t;
 
-__ALIGN(4) static nrf_vdma_job_t in_job_list[5];  ///< CCM DMA input job list array.
-__ALIGN(4) static nrf_vdma_job_t out_job_list[6]; ///< CCM DMA output job list array.
+__ALIGN(8) static nrf_vdma_job_t in_job_list[5];  ///< CCM DMA input job list array.
+__ALIGN(8) static nrf_vdma_job_t out_job_list[5]; ///< CCM DMA output job list array.
 
 static ccm_params_t ccm_params;                   ///< CCM peripheral parameters.
 static bool         m_initialized;                ///< Module init status.
 
 static void ccm_disable(void)
 {
-    nrf_802154_irq_disable(nrfx_get_irq_number(NRF_CCM020));
-    nrf_ccm_subscribe_clear(NRF_CCM020, NRF_CCM_TASK_START);
-    nrf_ccm_subscribe_clear(NRF_CCM020, NRF_CCM_TASK_STOP);
-    nrf_ccm_int_disable(NRF_CCM020, NRF_CCM_INT_ERROR_MASK | NRF_CCM_INT_END_MASK);
-    nrf_ccm_disable(NRF_CCM020);
+    nrf_802154_irq_disable(nrfx_get_irq_number(NRF_802154_CCM_INSTANCE));
+    nrf_ccm_subscribe_clear(NRF_802154_CCM_INSTANCE, NRF_CCM_TASK_START);
+    nrf_ccm_subscribe_clear(NRF_802154_CCM_INSTANCE, NRF_CCM_TASK_STOP);
+    nrf_ccm_int_disable(NRF_802154_CCM_INSTANCE, NRF_CCM_INT_ERROR_MASK | NRF_CCM_INT_END_MASK);
+    nrf_ccm_disable(NRF_802154_CCM_INSTANCE);
 }
 
 static void ccm_irq_handler(void)
 {
-    if (nrf_ccm_int_enable_check(NRF_CCM020, NRF_CCM_INT_ERROR_MASK) &&
-        nrf_ccm_event_check(NRF_CCM020, NRF_CCM_EVENT_ERROR))
+    if (nrf_ccm_int_enable_check(NRF_802154_CCM_INSTANCE, NRF_CCM_INT_ERROR_MASK) &&
+        nrf_ccm_event_check(NRF_802154_CCM_INSTANCE, NRF_CCM_EVENT_ERROR))
     {
-        nrf_ccm_event_clear(NRF_CCM020, NRF_CCM_EVENT_ERROR);
+        nrf_ccm_event_clear(NRF_802154_CCM_INSTANCE, NRF_CCM_EVENT_ERROR);
         assert(false);
     }
 
-    if (nrf_ccm_int_enable_check(NRF_CCM020, NRF_CCM_INT_END_MASK) &&
-        nrf_ccm_event_check(NRF_CCM020, NRF_CCM_EVENT_END))
+    if (nrf_ccm_int_enable_check(NRF_802154_CCM_INSTANCE, NRF_CCM_INT_END_MASK) &&
+        nrf_ccm_event_check(NRF_802154_CCM_INSTANCE, NRF_CCM_EVENT_END))
     {
-        nrf_ccm_event_clear(NRF_CCM020, NRF_CCM_EVENT_END);
+        nrf_ccm_event_clear(NRF_802154_CCM_INSTANCE, NRF_CCM_EVENT_END);
         nrf_802154_tx_work_buffer_is_secured_set();
         ccm_disable();
     }
@@ -162,44 +165,101 @@ static bool ccm_configure(const nrf_802154_aes_ccm_data_t * p_aes_ccm_data,
     u8_string_to_u32x4_big_endian(p_aes_ccm_data->nonce, sizeof(p_aes_ccm_data->nonce), nonce);
 
     // CCM peripheral job list integer params pointed by p_job_ptr must have big-endian byte order.
-    host_16_to_little(p_aes_ccm_data->auth_data_len, (uint8_t*)&ccm_params.in.alen);
-    host_16_to_little(p_aes_ccm_data->plain_text_data_len, (uint8_t*)&ccm_params.in.mlen);
+    host_16_to_little(p_aes_ccm_data->auth_data_len, (uint8_t *)&ccm_params.in.alen);
+    host_16_to_little(p_aes_ccm_data->plain_text_data_len, (uint8_t *)&ccm_params.in.mlen);
 
-    nrf_vdma_job_fill(&in_job_list[0], &ccm_params.in.alen, sizeof(ccm_params.in.alen), 0);
-    nrf_vdma_job_fill(&in_job_list[1], &ccm_params.in.mlen, sizeof(ccm_params.in.mlen), 0);
-    nrf_vdma_job_fill(&in_job_list[2], p_aes_ccm_data->auth_data, p_aes_ccm_data->auth_data_len, 0);
-    nrf_vdma_job_fill(&in_job_list[3], p_aes_ccm_data->plain_text_data, p_aes_ccm_data->plain_text_data_len, 0);
+    nrf_vdma_job_fill(&in_job_list[0], &ccm_params.in.alen, sizeof(ccm_params.in.alen), 11);
+    nrf_vdma_job_fill(&in_job_list[1], &ccm_params.in.mlen, sizeof(ccm_params.in.mlen), 12);
+    nrf_vdma_job_fill(&in_job_list[2],
+                      p_aes_ccm_data->auth_data,
+                      p_aes_ccm_data->auth_data_len,
+                      13);
+    nrf_vdma_job_fill(&in_job_list[3],
+                      p_aes_ccm_data->plain_text_data,
+                      p_aes_ccm_data->plain_text_data_len,
+                      14);
     nrf_vdma_job_terminate(&in_job_list[4]);
 
-    nrf_vdma_job_fill(&out_job_list[0], &ccm_params.out.alen, sizeof(ccm_params.out.alen), 0);
-    nrf_vdma_job_fill(&out_job_list[1], &ccm_params.out.mlen_lsb, sizeof(ccm_params.out.mlen_lsb), 0);
-    nrf_vdma_job_fill(&out_job_list[2], &ccm_params.out.mlen_msb, sizeof(ccm_params.out.mlen_msb), 0);
-    nrf_vdma_job_fill(&out_job_list[3], p_adata, p_aes_ccm_data->auth_data_len, 0);
-    nrf_vdma_job_fill(&out_job_list[4], p_mdata, p_aes_ccm_data->plain_text_data_len + macsize, 0);
-    nrf_vdma_job_terminate(&out_job_list[5]);
+    nrf_vdma_job_fill(&out_job_list[0], &ccm_params.out.alen, sizeof(ccm_params.out.alen), 11);
+    nrf_vdma_job_fill(&out_job_list[1], &ccm_params.out.mlen, sizeof(ccm_params.out.mlen), 12);
+    nrf_vdma_job_fill(&out_job_list[2], p_adata, p_aes_ccm_data->auth_data_len, 13);
+    nrf_vdma_job_fill(&out_job_list[3], p_mdata, p_aes_ccm_data->plain_text_data_len + macsize, 14);
+    nrf_vdma_job_terminate(&out_job_list[4]);
 
     if (!m_initialized)
     {
-        nrf_802154_irq_init(nrfx_get_irq_number(NRF_CCM020), NRF_802154_ECB_PRIORITY, ccm_irq_handler);
+        // DMASEC is set to non-secure by default, which prevents the CCM from accessing
+        // secure memory. Change the DMASEC to secure.
+        #if !defined(MOONLIGHT_XXAA)
+        nrf_spu_periph_perm_dmasec_set(NRF_SPU030, 10, true);
+        #endif
+        nrf_802154_irq_init(nrfx_get_irq_number(NRF_802154_CCM_INSTANCE),
+                            NRF_802154_ECB_PRIORITY,
+                            ccm_irq_handler);
         m_initialized = true;
     }
 
-    nrf_802154_irq_clear_pending(nrfx_get_irq_number(NRF_CCM020));
-    nrf_802154_irq_enable(nrfx_get_irq_number(NRF_CCM020));
+    nrf_802154_irq_clear_pending(nrfx_get_irq_number(NRF_802154_CCM_INSTANCE));
+    nrf_802154_irq_enable(nrfx_get_irq_number(NRF_802154_CCM_INSTANCE));
 
-    nrf_ccm_enable(NRF_CCM020);
-    nrf_ccm_configure(NRF_CCM020, &ccm_config);
-    nrf_ccm_key_set(NRF_CCM020, key);
-    nrf_ccm_nonce_set(NRF_CCM020, nonce);
-    nrf_ccm_in_ptr_set(NRF_CCM020, in_job_list);
-    nrf_ccm_out_ptr_set(NRF_CCM020, out_job_list);
-    nrf_ccm_event_clear(NRF_CCM020, NRF_CCM_EVENT_ERROR);
-    nrf_ccm_event_clear(NRF_CCM020, NRF_CCM_EVENT_END);
-    nrf_ccm_int_enable(NRF_CCM020, NRF_CCM_INT_ERROR_MASK | NRF_CCM_INT_END_MASK);
-    nrf_ccm_adatamask_set(NRF_CCM020, 0xff);
+    nrf_ccm_enable(NRF_802154_CCM_INSTANCE);
+    nrf_ccm_configure(NRF_802154_CCM_INSTANCE, &ccm_config);
+    nrf_ccm_key_set(NRF_802154_CCM_INSTANCE, key);
+    nrf_ccm_nonce_set(NRF_802154_CCM_INSTANCE, nonce);
+    nrf_ccm_in_ptr_set(NRF_802154_CCM_INSTANCE, in_job_list);
+    nrf_ccm_out_ptr_set(NRF_802154_CCM_INSTANCE, out_job_list);
+    nrf_ccm_event_clear(NRF_802154_CCM_INSTANCE, NRF_CCM_EVENT_ERROR);
+    nrf_ccm_event_clear(NRF_802154_CCM_INSTANCE, NRF_CCM_EVENT_END);
+    nrf_ccm_int_enable(NRF_802154_CCM_INSTANCE, NRF_CCM_INT_ERROR_MASK | NRF_CCM_INT_END_MASK);
+    nrf_ccm_adatamask_set(NRF_802154_CCM_INSTANCE, 0xff);
 
-    nrf_ccm_subscribe_set(NRF_CCM020, NRF_CCM_TASK_START, NRF_802154_DPPI_RADIO_READY);
-    nrf_ccm_subscribe_set(NRF_CCM020, NRF_CCM_TASK_STOP, NRF_802154_DPPI_RADIO_DISABLED);
+#ifndef MOONLIGHT_XXAA
+    nrf_ppib_subscribe_set(NRF_PPIB020,
+                           nrf_ppib_send_task_get(NRF_802154_DPPI_RADIO_READY),
+                           NRF_802154_DPPI_RADIO_READY);
+    nrf_ppib_publish_set(NRF_PPIB030,
+                         nrf_ppib_receive_event_get(NRF_802154_DPPI_RADIO_READY),
+                         NRF_802154_DPPI_RADIO_READY);
+
+    nrf_ppib_subscribe_set(NRF_PPIB020,
+                           nrf_ppib_send_task_get(NRF_802154_DPPI_RADIO_DISABLED),
+                           NRF_802154_DPPI_RADIO_DISABLED);
+    nrf_ppib_publish_set(NRF_PPIB030,
+                         nrf_ppib_receive_event_get(NRF_802154_DPPI_RADIO_DISABLED),
+                         NRF_802154_DPPI_RADIO_DISABLED);
+
+    nrf_dppi_channels_enable(NRF_DPPIC030,
+                             (1 << NRF_802154_DPPI_RADIO_READY) |
+                             (1 << NRF_802154_DPPI_RADIO_DISABLED));
+
+    nrf_ccm_subscribe_set(NRF_802154_CCM_INSTANCE, NRF_CCM_TASK_START, NRF_802154_DPPI_RADIO_READY);
+    nrf_ccm_subscribe_set(NRF_802154_CCM_INSTANCE,
+                          NRF_CCM_TASK_STOP,
+                          NRF_802154_DPPI_RADIO_DISABLED);
+#else
+    nrf_ppib_subscribe_set(NRF_PPIB10,
+                           nrf_ppib_send_task_get(NRF_802154_DPPI_RADIO_READY),
+                           NRF_802154_DPPI_RADIO_READY);
+    nrf_ppib_publish_set(NRF_PPIB00,
+                         nrf_ppib_receive_event_get(NRF_802154_DPPI_RADIO_READY),
+                         NRF_802154_DPPI_RADIO_READY);
+
+    nrf_ppib_subscribe_set(NRF_PPIB10,
+                           nrf_ppib_send_task_get(NRF_802154_DPPI_RADIO_DISABLED),
+                           NRF_802154_DPPI_RADIO_DISABLED);
+    nrf_ppib_publish_set(NRF_PPIB00,
+                         nrf_ppib_receive_event_get(NRF_802154_DPPI_RADIO_DISABLED),
+                         NRF_802154_DPPI_RADIO_DISABLED);
+
+    nrf_dppi_channels_enable(NRF_DPPIC00,
+                             (1 << NRF_802154_DPPI_RADIO_READY) |
+                             (1 << NRF_802154_DPPI_RADIO_DISABLED));
+
+    nrf_ccm_subscribe_set(NRF_802154_CCM_INSTANCE, NRF_CCM_TASK_START, NRF_802154_DPPI_RADIO_READY);
+    nrf_ccm_subscribe_set(NRF_802154_CCM_INSTANCE,
+                          NRF_CCM_TASK_STOP,
+                          NRF_802154_DPPI_RADIO_DISABLED);
+#endif
 
     return true;
 }

@@ -68,7 +68,7 @@ void nrf_802154_timer_coord_stop(void)
 
 void nrf_802154_sl_timer_module_init(void)
 {
-#ifndef HALTIUM_XXAA
+#if !defined(HALTIUM_XXAA) && !defined(MOONLIGHT_XXAA)
     BUILD_ASSERT(CONFIG_SYS_CLOCK_TICKS_PER_SEC == NRF_802154_SL_RTC_FREQUENCY);
 #endif
 }

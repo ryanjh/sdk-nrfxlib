@@ -529,14 +529,13 @@ extern "C" {
 #define NRF_802154_ENCRYPTION_ENABLED 1
 #endif
 
-
 /**
  * @def NRF_802154_ACCELERATOR_CCM
  *
  * Selects CCM peripheral to be used as an accelerator for on-the-fly CCM encryption.
  */
 #ifndef NRF_802154_ACCELERATOR_CCM
-#ifdef HALTIUM_XXAA
+#if defined(HALTIUM_XXAA) || defined(MOONLIGHT_XXAA)
 #define NRF_802154_ACCELERATOR_CCM 1
 #else
 #define NRF_802154_ACCELERATOR_CCM 0
@@ -549,7 +548,7 @@ extern "C" {
  * Selects ECB peripheral to be used as an accelerator for on-the-fly CCM encryption.
  */
 #ifndef NRF_802154_ACCELERATOR_ECB
-#ifdef HALTIUM_XXAA
+#if defined(HALTIUM_XXAA) || defined(MOONLIGHT_XXAA)
 #define NRF_802154_ACCELERATOR_ECB 0
 #else
 #define NRF_802154_ACCELERATOR_ECB 1

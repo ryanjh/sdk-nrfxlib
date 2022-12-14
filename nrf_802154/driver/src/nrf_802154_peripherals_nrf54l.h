@@ -33,12 +33,12 @@
  */
 
 /**
- * @brief Module that defines the 802.15.4 driver peripheral usage for nRF53 family.
+ * @brief Module that defines the 802.15.4 driver peripheral usage for nRF54 family.
  *
  */
 
-#ifndef NRF_802154_PERIPHERALS_NRF53_H__
-#define NRF_802154_PERIPHERALS_NRF53_H__
+#ifndef NRF_802154_PERIPHERALS_NRF54_H__
+#define NRF_802154_PERIPHERALS_NRF54_H__
 
 #include <nrfx.h>
 #include "nrf_802154_config.h"
@@ -57,7 +57,7 @@ extern "C" {
  *
  */
 #ifndef NRF_802154_EGU_INSTANCE_NO
-#define NRF_802154_EGU_INSTANCE_NO 020
+#define NRF_802154_EGU_INSTANCE_NO 10
 #endif
 
 /**
@@ -101,7 +101,7 @@ extern "C" {
  * @note This option is used when @ref NRF_802154_ACCELERATOR_CCM is set.
  *
  */
-#define NRF_802154_CCM_INSTANCE_NO   030
+#define NRF_802154_CCM_INSTANCE_NO   00
 
 /**
  * @def NRF_802154_CCM_INSTANCE
@@ -119,7 +119,7 @@ extern "C" {
  * Id of the DPPIC instance used by the driver to connect peripherals to radio.
  *
  */
-#define NRF_802154_DPPIC_INSTANCE_NO 020
+#define NRF_802154_DPPIC_INSTANCE_NO 10
 
 /**
  * @def NRF_802154_DPPIC_INSTANCE
@@ -319,23 +319,15 @@ extern "C" {
 #endif // NRF_802154_DPPI_GROUPS_USED_MASK
 
 /**
- * @def NRF_802154_HIGH_PRECISION_TIMER_INSTANCE_NO
- *
- * Number of the timer instance used for precise frame timestamps and synchronous radio operations.
- *
- */
-#define NRF_802154_HIGH_PRECISION_TIMER_INSTANCE_NO 020
-
-/**
  * @def NRF_802154_TIMER_INSTANCE_NO
  *
  * Number of the timer instance used both by the driver for ACK IFS and by the FEM module.
  *
  */
-#define NRF_802154_TIMER_INSTANCE_NO                022
+#define NRF_802154_TIMER_INSTANCE_NO 10
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // NRF_802154_PERIPHERALS_NRF53_H__
+#endif // NRF_802154_PERIPHERALS_NRF54_H__

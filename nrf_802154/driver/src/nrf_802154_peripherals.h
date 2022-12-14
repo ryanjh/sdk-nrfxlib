@@ -51,6 +51,8 @@
 #include "nrf_802154_peripherals_nrf53.h"
 #elif defined(HALTIUM_XXAA)
 #include "nrf_802154_peripherals_haltium.h"
+#elif defined(MOONLIGHT_XXAA)
+#include "nrf_802154_peripherals_nrf54l.h"
 #else
 #error Unsupported chip family
 #endif

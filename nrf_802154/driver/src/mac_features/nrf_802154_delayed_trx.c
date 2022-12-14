@@ -45,6 +45,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <nrfx.h>
 
 #include "../nrf_802154_debug.h"
 #include "nrf_802154_config.h"
@@ -70,7 +71,7 @@
 #elif defined(NRF53_SERIES)
 #define TX_SETUP_TIME_MAX 360u ///< Maximum time needed to prepare TX procedure [us]. It does not include TX ramp-up time.
 #define RX_SETUP_TIME_MAX 290u ///< Maximum time needed to prepare RX procedure [us]. It does not include RX ramp-up time.
-#elif defined(HALTIUM_XXAA)
+#elif defined(HALTIUM_XXAA) || defined(MOONLIGHT_XXAA)
 #define TX_SETUP_TIME_MAX 1600u ///< Maximum time needed to prepare TX procedure [us]. It does not include TX ramp-up time.
 #define RX_SETUP_TIME_MAX 1600u ///< Maximum time needed to prepare RX procedure [us]. It does not include RX ramp-up time.
 #endif

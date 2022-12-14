@@ -99,7 +99,7 @@ int8_t nrf_802154_rssi_sample_temp_corr_value_get(uint8_t rssi_sample)
     return result;
 }
 
-#elif defined(NRF5340_XXAA) || defined(HALTIUM_XXAA)
+#elif defined(NRF5340_XXAA) || defined(HALTIUM_XXAA) || defined(MOONLIGHT_XXAA)
 
 /** Macro for calculating x raised to the power of 2. */
 #define POW_2(x)        ((x) * (x))
