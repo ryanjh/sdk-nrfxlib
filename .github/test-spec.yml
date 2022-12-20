@@ -109,3 +109,9 @@
 
 "CI-positioning-test":
   - "nrf_modem/**/*"
+
+"CI-test_sdk_hcs":
+  - "**/*"
+
+"CI-test_sdk_sysctrl":
+  - "**/*"
