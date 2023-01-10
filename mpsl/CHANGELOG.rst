@@ -7,20 +7,10 @@ Changelog
    :local:
    :depth: 2
 
-nRF Connect SDK v2.1.0
-**********************
+Main branch
+***********
 
-All the notable changes included in the |NCS| v2.1.0 release are documented in this section.
-
-Added
-=====
-
-* Support for the nRF21540 GPIO & SPI front-end module.
-  SPI is used to set Tx gain of the nRF21540 in runtime.
-  Support for this mode of operation for nRF21540 with Bluetooth LE is experimental.
-* Support for adding an optional external model used to split the requested transmit power into components.
-  This is then used by :c:func:`mpsl_fem_tx_power_split`. (KRKNWK-14464)
-* An experimental version of a built-in nRF21540 GPIO & SPI front-end module compensation model.
+All the notable changes included in the main branch are documented in this section.
 
 Added
 =====
