@@ -189,6 +189,8 @@ enum sdc_hci_opcode_le
     SDC_HCI_OPCODE_CMD_LE_SET_PERIODIC_ADV_SYNC_TRANSFER_PARAMS = 0x205c,
     /** @brief See @ref sdc_hci_cmd_le_set_default_periodic_adv_sync_transfer_params(). */
     SDC_HCI_OPCODE_CMD_LE_SET_DEFAULT_PERIODIC_ADV_SYNC_TRANSFER_PARAMS = 0x205d,
+    /** @brief See @ref sdc_hci_cmd_le_request_peer_sca(). */
+    SDC_HCI_OPCODE_CMD_LE_REQUEST_PEER_SCA = 0x206d,
     /** @brief See @ref sdc_hci_cmd_le_enhanced_read_transmit_power_level(). */
     SDC_HCI_OPCODE_CMD_LE_ENHANCED_READ_TRANSMIT_POWER_LEVEL = 0x2076,
     /** @brief See @ref sdc_hci_cmd_le_read_remote_transmit_power_level(). */
@@ -199,6 +201,8 @@ enum sdc_hci_opcode_le
     SDC_HCI_OPCODE_CMD_LE_SET_PATH_LOSS_REPORTING_ENABLE = 0x2079,
     /** @brief See @ref sdc_hci_cmd_le_set_transmit_power_reporting_enable(). */
     SDC_HCI_OPCODE_CMD_LE_SET_TRANSMIT_POWER_REPORTING_ENABLE = 0x207a,
+    /** @brief See @ref sdc_hci_cmd_le_set_data_related_address_changes(). */
+    SDC_HCI_OPCODE_CMD_LE_SET_DATA_RELATED_ADDRESS_CHANGES = 0x207c,
 };
 
 /** @brief LE Extended Create Connection array parameters. */
@@ -305,6 +309,12 @@ typedef __PACKED_STRUCT
     uint8_t connection_subrating_host_support : 1;
     uint8_t channel_classification : 1;
 } sdc_hci_le_le_features_t;
+
+/** @brief LE Set Connection CTE Transmit Parameters array parameters. */
+typedef __PACKED_STRUCT
+{
+    uint8_t antenna_ids;
+} sdc_hci_le_set_conn_cte_transmit_params_array_params_t;
 
 /** @brief LE Set Connectionless CTE Transmit Parameters array parameters. */
 typedef __PACKED_STRUCT
@@ -448,7 +458,7 @@ typedef __PACKED_STRUCT
     uint8_t address[6];
 } sdc_hci_cmd_le_add_device_to_filter_accept_list_t;
 
-/** @brief E Remove Device From Filter Accept List command parameter(s). */
+/** @brief LE Remove Device From Filter Accept List command parameter(s). */
 typedef __PACKED_STRUCT
 {
     uint8_t address_type;
@@ -680,7 +690,7 @@ typedef __PACKED_STRUCT
     uint8_t peer_address_type;
     uint8_t peer_address[6];
     uint8_t adv_filter_policy;
-    uint8_t adv_tx_power;
+    int8_t adv_tx_power;
     uint8_t primary_adv_phy;
     uint8_t secondary_adv_max_skip;
     uint8_t secondary_adv_phy;
@@ -701,7 +711,6 @@ typedef __PACKED_STRUCT
     uint8_t operation;
     uint8_t fragment_preference;
     uint8_t adv_data_length;
-    /** @brief Size: adv_data_length. */
     uint8_t adv_data[];
 } sdc_hci_cmd_le_set_ext_adv_data_t;
 
@@ -712,7 +721,6 @@ typedef __PACKED_STRUCT
     uint8_t operation;
     uint8_t fragment_preference;
     uint8_t scan_response_data_length;
-    /** @brief Size: scan_response_data_length. */
     uint8_t scan_response_data[];
 } sdc_hci_cmd_le_set_ext_scan_response_data_t;
 
@@ -757,7 +765,6 @@ typedef __PACKED_STRUCT
     uint8_t adv_handle;
     uint8_t operation;
     uint8_t adv_data_length;
-    /** @brief Size: adv_data_length. */
     uint8_t adv_data[];
 } sdc_hci_cmd_le_set_periodic_adv_data_t;
 
@@ -890,8 +897,7 @@ typedef __PACKED_STRUCT
     uint16_t conn_handle;
     uint8_t cte_types;
     uint8_t switching_pattern_length;
-    /** @brief Size: switching_pattern_length. */
-    uint8_t array_params[];
+    sdc_hci_le_set_conn_cte_transmit_params_array_params_t array_params[];
 } sdc_hci_cmd_le_set_conn_cte_transmit_params_t;
 
 /** @brief LE Set Connection CTE Transmit Parameters return parameter(s). */
@@ -982,6 +988,12 @@ typedef __PACKED_STRUCT
     uint8_t cte_type;
 } sdc_hci_cmd_le_set_default_periodic_adv_sync_transfer_params_t;
 
+/** @brief LE Request Peer SCA command parameter(s). */
+typedef __PACKED_STRUCT
+{
+    uint16_t conn_handle;
+} sdc_hci_cmd_le_request_peer_sca_t;
+
 /** @brief LE Enhanced Read Transmit Power Level command parameter(s). */
 typedef __PACKED_STRUCT
 {
@@ -1048,6 +1060,13 @@ typedef __PACKED_STRUCT
 {
     uint16_t conn_handle;
 } sdc_hci_cmd_le_set_transmit_power_reporting_enable_return_t;
+
+/** @brief LE Set Data Related Address Changes command parameter(s). */
+typedef __PACKED_STRUCT
+{
+    uint8_t adv_handle;
+    uint8_t change_reasons;
+} sdc_hci_cmd_le_set_data_related_address_changes_t;
 
 /** @} end of HCI_COMMAND_PARAMETERS */
 
@@ -1673,7 +1692,6 @@ uint8_t sdc_hci_cmd_le_read_filter_accept_list_size(sdc_hci_cmd_le_read_filter_a
  *   HCI_LE_Create_Connection or HCI_LE_Extended_Create_Connection
  *   command is pending.
  *
- *
  * Event(s) generated (unless masked away):
  * When the HCI_LE_Clear_Filter_Accept_List command has completed, an
  * HCI_Command_Complete event shall be generated.
@@ -1723,7 +1741,7 @@ uint8_t sdc_hci_cmd_le_clear_filter_accept_list(void);
  */
 uint8_t sdc_hci_cmd_le_add_device_to_filter_accept_list(const sdc_hci_cmd_le_add_device_to_filter_accept_list_t * p_params);
 
-/** @brief E Remove Device From Filter Accept List.
+/** @brief LE Remove Device From Filter Accept List.
  *
  * The description below is extracted from Core_v5.3,
  * Vol 4, Part E, Section 7.8.17
@@ -4519,6 +4537,45 @@ uint8_t sdc_hci_cmd_le_set_periodic_adv_sync_transfer_params(const sdc_hci_cmd_l
  */
 uint8_t sdc_hci_cmd_le_set_default_periodic_adv_sync_transfer_params(const sdc_hci_cmd_le_set_default_periodic_adv_sync_transfer_params_t * p_params);
 
+/** @brief LE Request Peer SCA.
+ *
+ * The description below is extracted from Core_v5.3,
+ * Vol 4, Part E, Section 7.8.108
+ *
+ * This command is used to read the Sleep Clock Accuracy (SCA) of the peer
+ * device.
+ *
+ * The Connection_Handle parameter is the connection handle of the ACL
+ * connection.
+ *
+ * If the Host sends this command with a Connection_Handle that does not exist,
+ * or the Connection_Handle is not for an ACL the Controller shall return the error
+ * code Unknown Connection Identifier (0x02).
+ *
+ * If the Host sends this command and the peer device does not support the
+ * Sleep Clock Accuracy Updates feature, the Controller shall return the error
+ * code Unsupported Feature or Parameter Value (0x11) in the HCI_LE_-
+ * Request_Peer_SCA_Complete event.
+ *
+ * If the Host issues this command when the Controller is aware (e.g., through a
+ * previous feature exchange) that the peer device's Link Layer does not support
+ * the Sleep Clock Accuracy Updates feature, the Controller shall return the error
+ * code Unsupported Remote Feature (0x1A).
+ *
+ * Event(s) generated (unless masked away):
+ * When the Controller receives the HCI_LE_Request_Peer_SCA command, the
+ * Controller sends the HCI_Command_Status event to the Host. When the
+ * HCI_LE_Request_Peer_SCA command has completed, the HCI_LE_-
+ * Request_Peer_SCA_Complete event shall be generated.
+ *
+ * @param[in]  p_params Input parameters.
+ *
+ * @retval 0 if success.
+ * @return Returns value between 0x01-0xFF in case of error.
+ *         See Vol 2, Part D, Error for a list of error codes and descriptions.
+ */
+uint8_t sdc_hci_cmd_le_request_peer_sca(const sdc_hci_cmd_le_request_peer_sca_t * p_params);
+
 /** @brief LE Enhanced Read Transmit Power Level.
  *
  * The description below is extracted from Core_v5.3,
@@ -4581,7 +4638,8 @@ uint8_t sdc_hci_cmd_le_enhanced_read_transmit_power_level(const sdc_hci_cmd_le_e
  * When the Controller receives the HCI_LE_Read_Remote_Transmit_Power_-
  * Level command, the Controller shall send the HCI_Command_Status event to
  * the Host. When the Controller has determined the remote transmit power, it
- * shall generate an HCI_LE_Transmit_Power_Reporting event with Reason 0x02.
+ * shall generate an HCI_LE_Transmit_Power_Reporting event with Reason
+ * 0x02.
  *
  * Note: An HCI_Command_Complete event is not sent by the Controller to
  * indicate that this command has been completed. Instead, the HCI_LE_-
@@ -4728,7 +4786,8 @@ uint8_t sdc_hci_cmd_le_set_path_loss_reporting_enable(const sdc_hci_cmd_le_set_p
  *
  * If the Remote_Enable parameter is set to 0x01 and no prior LE Power Control
  * Request procedure has been initiated on the ACL connection, then the
- * Controller shall initiate a new LE Power Control Request procedure on that ACL.
+ * Controller shall initiate a new LE Power Control Request procedure on that
+ * ACL.
  *
  * Reporting is disabled when the connection is first created.
  *
@@ -4757,6 +4816,41 @@ uint8_t sdc_hci_cmd_le_set_path_loss_reporting_enable(const sdc_hci_cmd_le_set_p
  */
 uint8_t sdc_hci_cmd_le_set_transmit_power_reporting_enable(const sdc_hci_cmd_le_set_transmit_power_reporting_enable_t * p_params,
                                                            sdc_hci_cmd_le_set_transmit_power_reporting_enable_return_t * p_return);
+
+/** @brief LE Set Data Related Address Changes.
+ *
+ * The description below is extracted from Core_v5.3,
+ * Vol 4, Part E, Section 7.8.122
+ *
+ * The HCI_LE_Set_Data_Related_Address_Changes command specifies
+ * circumstances when the Controller shall refresh any Resolvable Private
+ * Address used by the advertising set identified by the Advertising_Handle
+ * parameter, whether or not the address timeout period has been reached. This
+ * command may be used while advertising is enabled.
+ *
+ * The Change_Reasons parameter specifies the reason(s) for refreshing
+ * addresses. The default when an advertising set is created, or if legacy
+ * advertising commands (see Section 3.1.1) are used, is for all bits to be clear.
+ *
+ * If extended advertising commands (see Section 3.1.1) are being used and the
+ * advertising set corresponding to the Advertising_Handle parameter does not
+ * exist, or if no command specified in Table 3.2 has been used, then the
+ * Controller shall return the error code Unknown Advertising Identifier (0x42).
+ *
+ * If legacy advertising commands are being used, the Controller shall ignore the
+ * Advertising_Handle parameter.
+ *
+ * Event(s) generated (unless masked away):
+ * When the HCI_LE_Set_Data_Related_Address_Changes command has
+ * completed, an HCI_Command_Complete event shall be generated.
+ *
+ * @param[in]  p_params Input parameters.
+ *
+ * @retval 0 if success.
+ * @return Returns value between 0x01-0xFF in case of error.
+ *         See Vol 2, Part D, Error for a list of error codes and descriptions.
+ */
+uint8_t sdc_hci_cmd_le_set_data_related_address_changes(const sdc_hci_cmd_le_set_data_related_address_changes_t * p_params);
 
 /** @} end of HCI_VS_API */
 
