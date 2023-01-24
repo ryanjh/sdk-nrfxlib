@@ -283,7 +283,7 @@ static void nrf_radio_reset(void)
 #if defined(RADIO_POWER_POWER_Msk) && !defined(MOONLIGHT_XXAA)
     nrf_radio_power_set(NRF_RADIO, false);
     nrf_radio_power_set(NRF_RADIO, true);
-#else // https://projecttools.nordicsemi.no/jira/browse/HM-12306
+#else // HM-12306, MLT-4108
     NRF_RADIO->TASKS_TXEN = 0;
     NRF_RADIO->TASKS_RXEN = 0;
     NRF_RADIO->TASKS_START = 0;
@@ -437,6 +437,7 @@ static void trigger_disable_to_start_rampup(void)
     if (!nrf_802154_trx_ppi_for_ramp_up_was_triggered())
     {
         nrf_radio_task_trigger(NRF_RADIO, NRF_RADIO_TASK_DISABLE);
+        nrf_radio_event_clear(NRF_RADIO, NRF_RADIO_EVENT_DISABLED);
     }
 }
 
@@ -687,7 +688,7 @@ void nrf_802154_trx_enable(void)
     packet_conf.maxlen = MAX_PACKET_SIZE;
     nrf_radio_packet_configure(NRF_RADIO, &packet_conf);
 
-#if defined(HALTIUM_XXAA) || defined(MOONLIGHT_XXAA)
+#if defined(BOARD_FPGA)
     NRF_RADIO->TIMING     |= RADIO_TIMING_RU_Msk; // Enable fast ramp-up.
     NRF_RADIO->QOVERRIDE27 = 0;
 
@@ -698,7 +699,7 @@ void nrf_802154_trx_enable(void)
 
     temp                   = NRF_RADIO->ADDRWINSIZE & ~RADIO_ADDRWINSIZE_IEEE802154_Msk;
     NRF_RADIO->ADDRWINSIZE = temp | (0x18 << RADIO_ADDRWINSIZE_IEEE802154_Pos);
-#elif defined(MOONLIGHT_XXAA)
+#elif defined(RADIO_TIMING_RU_Msk)
     NRF_RADIO->TIMING |= RADIO_TIMING_RU_Msk; // Enable fast ramp-up.
 #else
     nrf_radio_modecnf0_set(NRF_RADIO, true, 0);
@@ -1312,7 +1313,7 @@ bool nrf_802154_trx_rssi_measure(void)
                 m_flags.rssi_settled = true;
             }
 
-#if !defined(HALTIUM_XXAA) && !defined(MOONLIGHT_XXAA)
+#if defined(RADIO_INTENSET_RSSIEND_Msk)
             nrf_radio_event_clear(NRF_RADIO, NRF_RADIO_EVENT_RSSIEND);
 #endif
             nrf_radio_task_trigger(NRF_RADIO, NRF_RADIO_TASK_RSSISTART);
@@ -1346,7 +1347,7 @@ uint8_t nrf_802154_trx_rssi_last_sample_get(void)
 
 bool nrf_802154_trx_rssi_sample_is_available(void)
 {
-#if !defined(HALTIUM_XXAA) && !defined(MOONLIGHT_XXAA)
+#if defined(RADIO_EVENTS_RSSIEND_EVENTS_RSSIEND_Msk)
     return nrf_radio_event_check(NRF_RADIO, NRF_RADIO_EVENT_RSSIEND);
 #else
     return true;
@@ -1560,7 +1561,7 @@ bool nrf_802154_trx_transmit_ack(const void * p_transmit_buffer, uint32_t delay_
     }
     else
     {
-#if !defined(HALTIUM_XXAA)
+#if !(defined(HALTIUM_XXAA) && defined(BOARD_FPGA))
         /* We were to late with setting up PPI_TIMER_ACK, ack transmission was not triggered and
          * will not be triggered in future.
          */
@@ -2260,7 +2261,7 @@ static void irq_handler_bcmatch(void)
 
     current_bcc = nrf_radio_bcc_get(NRF_RADIO) / 8U;
 
-#if defined(HALTIUM_XXAA)
+#if defined(HALTIUM_XXAA) && defined(BOARD_FPGA)
 
     /*
      * FPGA workaround. The FPGA is too slow to set the BCC register on time.
@@ -2282,7 +2283,7 @@ static void irq_handler_bcmatch(void)
             return;
         }
 
-#if defined(HALTIUM_XXAA)
+#if defined(HALTIUM_XXAA) && defined(BOARD_FPGA)
         nrf_radio_event_clear(NRF_RADIO, NRF_RADIO_EVENT_BCMATCH);
 #endif
 
@@ -2295,7 +2296,7 @@ static void irq_handler_bcmatch(void)
              * should be handled by the handler.
              */
             nrf_radio_bcc_set(NRF_RADIO, next_bcc * 8);
-#if defined(HALTIUM_XXAA)
+#if defined(HALTIUM_XXAA) && defined(BOARD_FPGA)
             should_repeat = true;
             current_bcc   = next_bcc;
 #endif
@@ -2834,7 +2835,7 @@ const nrf_802154_sl_event_handle_t * nrf_802154_trx_radio_ready_event_handle_get
 {
     static const nrf_802154_sl_event_handle_t r = {
 #if defined(DPPI_PRESENT)
-        .event_addr = NRF_802154_DPPI_RADIO_READY,
+        .event_addr = NRF_802154_DPPI_RADIO_TXREADY,
         .shared     = true
 #else
         .event_addr = (uint32_t)&NRF_RADIO->EVENTS_READY

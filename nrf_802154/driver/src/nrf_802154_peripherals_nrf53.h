@@ -147,15 +147,15 @@ extern "C" {
 #endif
 
 /**
- * @def NRF_802154_DPPI_RADIO_READY
+ * @def NRF_802154_DPPI_RADIO_TXREADY
  *
- * The DPPI channel that publishes RADIO_READY event.
+ * The DPPI channel that publishes RADIO_TXREADY event.
  *
  * @note This option is used by the core module regardless of the driver configuration.
  *
  */
-#ifndef NRF_802154_DPPI_RADIO_READY
-#define NRF_802154_DPPI_RADIO_READY 4U
+#ifndef NRF_802154_DPPI_RADIO_TXREADY
+#define NRF_802154_DPPI_RADIO_TXREADY 4U
 #endif
 
 /**
@@ -291,7 +291,7 @@ extern "C" {
 #ifndef NRF_802154_DPPI_CHANNELS_USED_MASK
 #define NRF_802154_DPPI_CHANNELS_USED_MASK (                   \
         (1UL << NRF_802154_DPPI_RADIO_DISABLED) |              \
-        (1UL << NRF_802154_DPPI_RADIO_READY) |                 \
+        (1UL << NRF_802154_DPPI_RADIO_TXREADY) |               \
         (1UL << NRF_802154_DPPI_RADIO_ADDRESS) |               \
         (1UL << NRF_802154_DPPI_RADIO_END) |                   \
         (1UL << NRF_802154_DPPI_RADIO_PHYEND) |                \

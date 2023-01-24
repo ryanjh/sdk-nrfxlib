@@ -215,11 +215,11 @@ static bool ccm_configure(const nrf_802154_aes_ccm_data_t * p_aes_ccm_data,
 
 #ifndef MOONLIGHT_XXAA
     nrf_ppib_subscribe_set(NRF_PPIB020,
-                           nrf_ppib_send_task_get(NRF_802154_DPPI_RADIO_READY),
-                           NRF_802154_DPPI_RADIO_READY);
+                           nrf_ppib_send_task_get(NRF_802154_DPPI_RADIO_TXREADY),
+                           NRF_802154_DPPI_RADIO_TXREADY);
     nrf_ppib_publish_set(NRF_PPIB030,
-                         nrf_ppib_receive_event_get(NRF_802154_DPPI_RADIO_READY),
-                         NRF_802154_DPPI_RADIO_READY);
+                         nrf_ppib_receive_event_get(NRF_802154_DPPI_RADIO_TXREADY),
+                         NRF_802154_DPPI_RADIO_TXREADY);
 
     nrf_ppib_subscribe_set(NRF_PPIB020,
                            nrf_ppib_send_task_get(NRF_802154_DPPI_RADIO_DISABLED),
@@ -229,20 +229,22 @@ static bool ccm_configure(const nrf_802154_aes_ccm_data_t * p_aes_ccm_data,
                          NRF_802154_DPPI_RADIO_DISABLED);
 
     nrf_dppi_channels_enable(NRF_DPPIC030,
-                             (1 << NRF_802154_DPPI_RADIO_READY) |
+                             (1 << NRF_802154_DPPI_RADIO_TXREADY) |
                              (1 << NRF_802154_DPPI_RADIO_DISABLED));
 
-    nrf_ccm_subscribe_set(NRF_802154_CCM_INSTANCE, NRF_CCM_TASK_START, NRF_802154_DPPI_RADIO_READY);
+    nrf_ccm_subscribe_set(NRF_802154_CCM_INSTANCE,
+                          NRF_CCM_TASK_START,
+                          NRF_802154_DPPI_RADIO_TXREADY);
     nrf_ccm_subscribe_set(NRF_802154_CCM_INSTANCE,
                           NRF_CCM_TASK_STOP,
                           NRF_802154_DPPI_RADIO_DISABLED);
 #else
     nrf_ppib_subscribe_set(NRF_PPIB10,
-                           nrf_ppib_send_task_get(NRF_802154_DPPI_RADIO_READY),
-                           NRF_802154_DPPI_RADIO_READY);
+                           nrf_ppib_send_task_get(NRF_802154_DPPI_RADIO_TXREADY),
+                           NRF_802154_DPPI_RADIO_TXREADY);
     nrf_ppib_publish_set(NRF_PPIB00,
-                         nrf_ppib_receive_event_get(NRF_802154_DPPI_RADIO_READY),
-                         NRF_802154_DPPI_RADIO_READY);
+                         nrf_ppib_receive_event_get(NRF_802154_DPPI_RADIO_TXREADY),
+                         NRF_802154_DPPI_RADIO_TXREADY);
 
     nrf_ppib_subscribe_set(NRF_PPIB10,
                            nrf_ppib_send_task_get(NRF_802154_DPPI_RADIO_DISABLED),
@@ -252,10 +254,12 @@ static bool ccm_configure(const nrf_802154_aes_ccm_data_t * p_aes_ccm_data,
                          NRF_802154_DPPI_RADIO_DISABLED);
 
     nrf_dppi_channels_enable(NRF_DPPIC00,
-                             (1 << NRF_802154_DPPI_RADIO_READY) |
+                             (1 << NRF_802154_DPPI_RADIO_TXREADY) |
                              (1 << NRF_802154_DPPI_RADIO_DISABLED));
 
-    nrf_ccm_subscribe_set(NRF_802154_CCM_INSTANCE, NRF_CCM_TASK_START, NRF_802154_DPPI_RADIO_READY);
+    nrf_ccm_subscribe_set(NRF_802154_CCM_INSTANCE,
+                          NRF_CCM_TASK_START,
+                          NRF_802154_DPPI_RADIO_TXREADY);
     nrf_ccm_subscribe_set(NRF_802154_CCM_INSTANCE,
                           NRF_CCM_TASK_STOP,
                           NRF_802154_DPPI_RADIO_DISABLED);

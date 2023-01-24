@@ -265,7 +265,9 @@ uint32_t nrf_802154_critical_section_active_vector_priority_get(void)
         return UINT32_MAX;
     }
 
+#if !defined(HALTIUM_XXAA) || defined(BOARD_FPGA)
     assert(active_vector_id >= CMSIS_IRQ_NUM_VECTACTIVE_DIFF);
+#endif
 
     irq_number      = (IRQn_Type)(active_vector_id - CMSIS_IRQ_NUM_VECTACTIVE_DIFF);
     active_priority = nrf_802154_irq_priority_get(irq_number);

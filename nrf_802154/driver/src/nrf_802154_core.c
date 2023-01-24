@@ -637,11 +637,7 @@ static int_fast8_t action_needed(rsch_prio_t old_prio, rsch_prio_t new_prio, rad
 /** Check if time remaining in the timeslot is long enough to process whole critical section. */
 static bool remaining_timeslot_time_is_enough_for_crit_sect(void)
 {
-#if defined(HALTIUM_XXAA)
-    return true;
-#else
     return nrf_802154_rsch_timeslot_us_left_get() >= MAX_CRIT_SECT_TIME;
-#endif
 }
 
 /** Check if critical section can be processed at the moment.
