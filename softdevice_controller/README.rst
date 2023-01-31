@@ -46,6 +46,8 @@ Variants for the Arm Cortex-M33 processor are available as soft-float only.
 | Periodic Advertising Sync      |                 |              | X         |
 | Transfer - Receiver            |                 |              |           |
 +--------------------------------+-----------------+--------------+-----------+
+| Sleep Clock Accuracy Updates   |                 |              | X         |
++--------------------------------+-----------------+--------------+-----------+
 
 .. note::
    The following limitations apply to the listed features:
