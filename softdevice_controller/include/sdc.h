@@ -100,9 +100,9 @@ extern "C" {
  */
 
 /** @brief Auxiliary defines, not to be used outside of this file. */
-#define __MEM_MINIMAL_CENTRAL_LINK_SIZE 1156
-#define __MEM_MINIMAL_PERIPHERAL_LINK_SIZE 1300
-#define __MEM_TX_BUFFER_OVERHEAD_SIZE 16
+#define __MEM_MINIMAL_CENTRAL_LINK_SIZE 1054
+#define __MEM_MINIMAL_PERIPHERAL_LINK_SIZE 1190
+#define __MEM_TX_BUFFER_OVERHEAD_SIZE 15
 #define __MEM_RX_BUFFER_OVERHEAD_SIZE 14
 
 #define __MEM_ADDITIONAL_LINK_SIZE(tx_size, rx_size, tx_count, rx_count) \
@@ -406,10 +406,9 @@ int32_t sdc_cfg_set(uint8_t config_tag,
  *                      event is available. The callback will be executed in
  *                      the same context as @ref mpsl_low_priority_process.
  *                      See also @ref sdc_hci_get().
- * @param[in]  p_mem    Provide memory for the current resource configuration.
- *                      To obtain the required memory size, use the value
+ * @param[in]  p_mem    Provide memory for the current resource configuration. If
+ *                      custom resource configurations are used, use the value
  *                      returned from @ref sdc_cfg_set().
- *                      The pointer must be 8 bytes aligned.
  *
  * @retval 0            Success
  * @retval -NRF_EINVAL  Invalid argument provided
@@ -700,28 +699,6 @@ int32_t sdc_support_le_power_control_central(void);
  * @retval -NRF_EOPNOTSUPP  LE Power Control is not supported.
  */
 int32_t sdc_support_le_power_control_peripheral(void);
-
-/** @brief Support Sleep Clock Accuracy (SCA) Update procedure for central role
- *
- * @note The application is required to call both @ref sdc_support_sca_central() and @ref sdc_support_sca_peripheral()
- *       if both central and peripheral roles are supported.
- *
- * @retval 0                Success
- * @retval -NRF_EPERM       This API must be called before @ref sdc_cfg_set() or @ref sdc_enable().
- * @retval -NRF_EOPNOTSUPP  SCA Update procedure is not supported.
- */
-int32_t sdc_support_sca_central(void);
-
-/** @brief Support Sleep Clock Accuracy (SCA) Update procedure for peripheral role
- *
- * @note The application is required to call both @ref sdc_support_sca_central() and @ref sdc_support_sca_peripheral()
- *       if both central and peripheral roles are supported.
- *
- * @retval 0                Success
- * @retval -NRF_EPERM       This API must be called before @ref sdc_cfg_set() or @ref sdc_enable().
- * @retval -NRF_EOPNOTSUPP  SCA Update procedure is not supported.
- */
-int32_t sdc_support_sca_peripheral(void);
 
 /** @brief Support LE Connection CTE response for central role
  *
