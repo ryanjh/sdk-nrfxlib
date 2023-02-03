@@ -20,7 +20,7 @@
 /* Max ZCBOR states: 2 means that no backups are available but we can use constant state
  * to enable stop_on_error.
  */
-#define NRF_RPC_ZCBOR_STATES	2
+#define NRF_RPC_ZCBOR_STATES	(2 + CONFIG_NRF_RPC_ZCBOR_BACKUPS)
 
 /**
  * @defgroup nrf_rpc_cbor TinyCBOR serialization layer for nRF RPC.
@@ -134,6 +134,14 @@ struct nrf_rpc_cbor_ctx {
  */
 #define NRF_RPC_CBOR_DISCARD(_group, _ctx)            \
 	nrf_rpc_free_tx_buf(_group, (_ctx).out_packet)
+
+/** @brief Check that the memory for a packet has been allocated.
+ *
+ * @param ctx  Context allocated by @ref NRF_RPC_CBOR_ALLOC.
+ *
+ * @return     true if memory is valid otherwise false.
+ */
+bool nrf_rpc_cbor_is_alloc(struct nrf_rpc_cbor_ctx *ctx);
 
 /** @brief Send a command and provide callback to handle response.
  *
