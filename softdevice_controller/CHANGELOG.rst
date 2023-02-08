@@ -30,6 +30,7 @@ Bug fixes
 * Fixed a bug where the ``Peer_Address_Type`` parameter in the ``LE Connection Complete`` event was set to 2 or 3 in case the connection was established to a device which address was resolved (DRGN-18411).
   The least significant bit of the ``Peer_Address_Type`` parameter was set correctly.
 * Fixed an issue where the stack could dereference a NULL pointer when starting a periodic advertiser (DRGN-18420).
+* Fixed an issue where initiating Periodic Advertisement Sync Transfer (PAST) as advertiser may assert when the periodic advertisement train is not running (DRGN-18586).
 
 nRF Connect SDK v2.2.0
 **********************

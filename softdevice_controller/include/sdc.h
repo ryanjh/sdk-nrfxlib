@@ -100,9 +100,9 @@ extern "C" {
  */
 
 /** @brief Auxiliary defines, not to be used outside of this file. */
-#define __MEM_MINIMAL_CENTRAL_LINK_SIZE 1096
-#define __MEM_MINIMAL_PERIPHERAL_LINK_SIZE 1232
-#define __MEM_TX_BUFFER_OVERHEAD_SIZE 15
+#define __MEM_MINIMAL_CENTRAL_LINK_SIZE 1156
+#define __MEM_MINIMAL_PERIPHERAL_LINK_SIZE 1300
+#define __MEM_TX_BUFFER_OVERHEAD_SIZE 16
 #define __MEM_RX_BUFFER_OVERHEAD_SIZE 14
 
 #define __MEM_ADDITIONAL_LINK_SIZE(tx_size, rx_size, tx_count, rx_count) \
@@ -406,9 +406,10 @@ int32_t sdc_cfg_set(uint8_t config_tag,
  *                      event is available. The callback will be executed in
  *                      the same context as @ref mpsl_low_priority_process.
  *                      See also @ref sdc_hci_get().
- * @param[in]  p_mem    Provide memory for the current resource configuration. If
- *                      custom resource configurations are used, use the value
+ * @param[in]  p_mem    Provide memory for the current resource configuration.
+ *                      To obtain the required memory size, use the value
  *                      returned from @ref sdc_cfg_set().
+ *                      The pointer must be 8 bytes aligned.
  *
  * @retval 0            Success
  * @retval -NRF_EINVAL  Invalid argument provided
