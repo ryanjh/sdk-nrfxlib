@@ -67,6 +67,18 @@
 #include "cracen_psa.h"
 #endif /* PSA_CRYPTO_DRIVER_CRACEN */
 
+/* Include TF-M builtin key driver */
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+#ifndef PSA_CRYPTO_DRIVER_PRESENT
+#define PSA_CRYPTO_DRIVER_PRESENT
+#endif
+#ifndef PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT
+#define PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT
+#endif
+#include "tfm_crypto_defs.h"
+#include "tfm_builtin_key_loader.h"
+#endif /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
+
 
 /* Repeat above block for each JSON-declared driver during autogeneration */
 #endif /* MBEDTLS_PSA_CRYPTO_DRIVERS */
@@ -87,8 +99,12 @@
 #endif /* PSA_CRYPTO_DRIVER_OBERON */
 
 #if defined(PSA_CRYPTO_DRIVER_CRACEN)
-#define PSA_CRYPTO_CRACEN_DRIVER_ID (6)
+#define PSA_CRYPTO_CRACEN_DRIVER_ID (7)
 #endif /* PSA_CRYPTO_DRIVER_CRACEN */
+
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+#define PSA_CRYPTO_TFM_BUILTIN_KEY_LOADER_DRIVER_ID (6)
+#endif /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
 
 /* Support the 'old' SE interface when asked to */
 #if defined(MBEDTLS_PSA_CRYPTO_SE_C)
