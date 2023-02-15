@@ -76,9 +76,6 @@
 #define PPI_CCAIDLE_FEM  0
 #define RADIO_BASE       NRF_RADIO_NS_BASE
 #define FICR_BASE        NRF_FICR_NS_BASE
-#elif defined(HALTIUM_XXAA)
-#define PPI_CCAIDLE_FEM  0
-#define RADIO_BASE       NRF_RADIOCORE_RADIO_S_BASE
 #endif
 
 #if NRF_802154_DISABLE_BCC_MATCHING
@@ -689,17 +686,29 @@ void nrf_802154_trx_enable(void)
     nrf_radio_packet_configure(NRF_RADIO, &packet_conf);
 
 #if defined(BOARD_FPGA)
-    NRF_RADIO->TIMING     |= RADIO_TIMING_RU_Msk; // Enable fast ramp-up.
-    NRF_RADIO->QOVERRIDE27 = 0;
-
     uint32_t temp;
 
-    temp                  = NRF_RADIO->DBCORRADAP & ~RADIO_DBCORRADAP_TH_Msk;
-    NRF_RADIO->DBCORRADAP = temp | (0x2d << RADIO_DBCORRADAP_TH_Pos);
-
+    NRF_RADIO->QOVERRIDE27 = 0;
+    temp                   = NRF_RADIO->DBCCORR & ~RADIO_DBCCORR_TH_Msk;
+    NRF_RADIO->DBCCORR     = temp | (0x2d << RADIO_DBCCORR_TH_Pos);
     temp                   = NRF_RADIO->ADDRWINSIZE & ~RADIO_ADDRWINSIZE_IEEE802154_Msk;
     NRF_RADIO->ADDRWINSIZE = temp | (0x18 << RADIO_ADDRWINSIZE_IEEE802154_Pos);
-#elif defined(RADIO_TIMING_RU_Msk)
+#elif defined(HALTIUM_XXAA)
+    uint32_t temp;
+
+    NRF_RADIO->SPHYNXANA.FSCTRL1 = NRF_FICR->TRIM.RADIOCORE.RADIO.SPHYNXANA.FSCTRL1;
+    NRF_RADIO->SPHYNXANA.FSCTRL2 = NRF_FICR->TRIM.RADIOCORE.RADIO.SPHYNXANA.FSCTRL2;
+    NRF_RADIO->SPHYNXANA.RXCTRL = NRF_FICR->TRIM.RADIOCORE.RADIO.SPHYNXANA.RXCTRL;
+    NRF_RADIO->SPHYNXANA.TXCTRL = NRF_FICR->TRIM.RADIOCORE.RADIO.SPHYNXANA.TXCTRL;
+    NRF_RADIO->SPHYNXANA.OVRRXTRIMCODE = NRF_FICR->TRIM.RADIOCORE.RADIO.SPHYNXANA.OVRRXTRIMCODE;
+
+    NRF_RADIO->RXSYNC      = 0x3390;
+    NRF_RADIO->ADDRWINSIZE = 0x1d111500;
+    temp                   = NRF_RADIO->DBCCORR & ~RADIO_DBCCORR_TH_Msk;
+    NRF_RADIO->DBCCORR     = temp | (0x51 << RADIO_DBCCORR_TH_Pos);
+#endif
+
+#if defined(RADIO_TIMING_RU_Msk)
     NRF_RADIO->TIMING |= RADIO_TIMING_RU_Msk; // Enable fast ramp-up.
 #else
     nrf_radio_modecnf0_set(NRF_RADIO, true, 0);
@@ -1551,13 +1560,7 @@ bool nrf_802154_trx_transmit_ack(const void * p_transmit_buffer, uint32_t delay_
 
     if (result)
     {
-        uint32_t ints_to_enable = NRF_RADIO_INT_PHYEND_MASK;
-
-#if NRF_802154_TX_STARTED_NOTIFY_ENABLED
-        ints_to_enable |= NRF_RADIO_INT_ADDRESS_MASK;
-#endif // NRF_802154_TX_STARTED_NOTIFY_ENABLED
-
-        nrf_radio_int_enable(NRF_RADIO, ints_to_enable);
+        nrf_radio_int_enable(NRF_RADIO, NRF_RADIO_INT_ADDRESS_MASK | NRF_RADIO_INT_PHYEND_MASK);
     }
     else
     {
@@ -2232,12 +2235,15 @@ static void irq_handler_address(void)
             break;
 #endif // NRF_802154_TX_STARTED_NOTIFY_ENABLED
 
-#if NRF_802154_TX_STARTED_NOTIFY_ENABLED
         case TRX_STATE_TXACK:
             nrf_radio_int_disable(NRF_RADIO, NRF_RADIO_INT_ADDRESS_MASK);
+            // NRF_RADIO_TASK_DISABLE was triggered by (D)PPI, therefore event reg cleanup
+            // is required. It's done here
+            nrf_radio_event_clear(NRF_RADIO, NRF_RADIO_EVENT_DISABLED);
+#if NRF_802154_TX_STARTED_NOTIFY_ENABLED
             nrf_802154_trx_transmit_ack_started();
-            break;
 #endif
+            break;
 
         default:
             assert(false);

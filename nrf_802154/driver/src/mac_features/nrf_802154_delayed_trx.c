@@ -66,14 +66,17 @@
 #if NRF_802154_DELAYED_TRX_ENABLED
 
 #if defined(NRF52_SERIES)
-#define TX_SETUP_TIME_MAX 270u ///< Maximum time needed to prepare TX procedure [us]. It does not include TX ramp-up time.
-#define RX_SETUP_TIME_MAX 270u ///< Maximum time needed to prepare RX procedure [us]. It does not include RX ramp-up time.
+#define TX_SETUP_TIME_MAX 270u  ///< Maximum time needed to prepare TX procedure [us]. It does not include TX ramp-up time.
+#define RX_SETUP_TIME_MAX 270u  ///< Maximum time needed to prepare RX procedure [us]. It does not include RX ramp-up time.
 #elif defined(NRF53_SERIES)
-#define TX_SETUP_TIME_MAX 360u ///< Maximum time needed to prepare TX procedure [us]. It does not include TX ramp-up time.
-#define RX_SETUP_TIME_MAX 290u ///< Maximum time needed to prepare RX procedure [us]. It does not include RX ramp-up time.
-#elif defined(HALTIUM_XXAA) || defined(MOONLIGHT_XXAA)
+#define TX_SETUP_TIME_MAX 360u  ///< Maximum time needed to prepare TX procedure [us]. It does not include TX ramp-up time.
+#define RX_SETUP_TIME_MAX 290u  ///< Maximum time needed to prepare RX procedure [us]. It does not include RX ramp-up time.
+#elif (defined(HALTIUM_XXAA) || defined(MOONLIGHT_XXAA)) && defined(BOARD_FPGA)
 #define TX_SETUP_TIME_MAX 1600u ///< Maximum time needed to prepare TX procedure [us]. It does not include TX ramp-up time.
 #define RX_SETUP_TIME_MAX 1600u ///< Maximum time needed to prepare RX procedure [us]. It does not include RX ramp-up time.
+#elif defined(HALTIUM_XXAA)
+#define TX_SETUP_TIME_MAX 400u  ///< Maximum time needed to prepare TX procedure [us]. It does not include TX ramp-up time.
+#define RX_SETUP_TIME_MAX 400u  ///< Maximum time needed to prepare RX procedure [us]. It does not include RX ramp-up time.
 #endif
 
 /**
