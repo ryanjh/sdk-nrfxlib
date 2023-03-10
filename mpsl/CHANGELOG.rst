@@ -7,6 +7,33 @@ Changelog
    :local:
    :depth: 2
 
+Main branch
+***********
+All the notable changes included in the main branch are documented in this section.
+
+Changes
+=======
+
+* Removed deprecated API for specifying the FEM pin configuration type associated with :c:macro:`MPSL_FEM_PIN_CFG_TYPE_PIN_PORT`.
+  Only the :c:struct:`mpsl_fem_pin_t` configuration is supported as a FEM pin configuration now (KRKNWK-16496).
+
+nRF Connect SDK v2.3.0
+**********************
+
+All the notable changes included in the |NCS| v2.3.0 release are documented in this section.
+
+Added
+=====
+
+* The bool parameter ``tx_power_ceiling`` to the external model used by the :c:func:`mpsl_fem_tx_power_split` function.
+  When enabled, the function returns the ceiling value instead of the floor.
+
+Bug fixes
+=========
+
+* Fixed a rare issue that could cause a scheduler assert if two roles were running (DRGN-18308).
+* Fixed a rare issue that could cause an assert when requesting timeslots with type ``MPSL_TIMESLOT_REQ_TYPE_EARLIEST`` (DRGN-18555).
+
 nRF Connect SDK v2.2.0
 **********************
 
