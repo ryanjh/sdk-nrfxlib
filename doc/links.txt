@@ -7,7 +7,7 @@
 
 .. _`nrfx`: https://github.com/NordicSemiconductor/nrfx/
 
-.. _`Arm Mbed TLS project`: https://github.com/ARMmbed/mbedtls
+.. _`Arm Mbed TLS project`: https://github.com/ARMmbed/mbedtlsgit
 
 .. _`TinyCBOR`: https://github.com/zephyrproject-rtos/tinycbor
 
@@ -41,6 +41,8 @@
 .. _`nRF9160 modem Packet Domain AT commands`: https://infocenter.nordicsemi.com/topic/ref_at_commands/REF/at_commands/packet_domain/packet_domain.html
 
 .. _`%XMODEMTRACE AT command documentation`: https://infocenter.nordicsemi.com/topic/ref_at_commands/REF/at_commands/mob_termination_ctrl_status/xmodemtrace.html
+
+.. _`coex interface of nRF9160`: https://infocenter.nordicsemi.com/index.jsp?topic=%2Fps_nrf9160%2Fip%2Fradio_lte%2Fdoc%2Fmagpio_if.html
 
 .. ### Source: www.nordicsemi.com
 
