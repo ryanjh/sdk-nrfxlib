@@ -3,7 +3,7 @@
 SoftDevice Controller
 #####################
 
-The |controller| is an RTOS-agnostic library built for the Nordic Semiconductor nRF52 and nRF53 Series.
+The |controller| is an RTOS-agnostic library built for the Nordic Semiconductor nRF52, nRF53, and nRF54 Series.
 It supports Bluetooth 5.
 The library utilizes services provided by the :ref:`mpsl`.
 

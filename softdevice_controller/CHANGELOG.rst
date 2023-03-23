@@ -9,14 +9,15 @@ Changelog
 
 All the notable changes to this project are documented on this page.
 
-Main branch
-***********
+nRF Connect SDK v2.2.99-cs1
+***************************
 
-All the notable changes included in the main branch are documented in this section.
+All the notable changes included in the |NCS| v2.2.99-cs1 release are documented in this section.
 
 Added
 =====
 
+* Experimental support for the nRF54 Series.
 * Support for the vendor-specific HCI command: Set Compatibility mode for window offset (DRGN-18727).
 * Support for Periodic Advertising with Responses (PAwR) Scanner (experimental) (DRGN-18739).
 
