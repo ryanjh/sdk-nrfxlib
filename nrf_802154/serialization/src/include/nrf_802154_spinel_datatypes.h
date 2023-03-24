@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022, Nordic Semiconductor ASA
+ * Copyright (c) 2020 - 2023, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -446,6 +446,12 @@ typedef enum
      */
     SPINEL_PROP_VENDOR_NORDIC_NRF_802154_CSL_WRITER_ANCHOR_TIME_SET =
         SPINEL_PROP_VENDOR_NORDIC_NRF_802154__BEGIN + 63,
+
+    /**
+     * Vendor property for nrf_802154_security_global_frame_counter_set_if_larger serialization.
+     */
+    SPINEL_PROP_VENDOR_NORDIC_NRF_802154_SECURITY_GLOBAL_FRAME_COUNTER_SET_IF_LARGER =
+        SPINEL_PROP_VENDOR_NORDIC_NRF_802154__BEGIN + 64,
 
 } spinel_prop_vendor_key_t;
 

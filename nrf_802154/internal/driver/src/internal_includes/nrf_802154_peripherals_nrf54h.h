@@ -1,48 +1,21 @@
 /*
- * Copyright (c) 2022, Nordic Semiconductor ASA
- * All rights reserved.
+ * Copyright (c) 2020 - 2023, Nordic Semiconductor ASA. All Rights Reserved.
  *
- * SPDX-License-Identifier: BSD-3-Clause
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
- *    contributors may be used to endorse or promote products derived from this
- *    software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY, AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
+ * The information contained herein is confidential property of Nordic Semiconductor ASA.
+ * The use, copying, transfer or disclosure of such information is prohibited except by
+ * express written agreement with Nordic Semiconductor ASA.
  */
 
 /**
- * @brief Module that defines the 802.15.4 driver peripheral usage for nRF54 family.
+ * @brief Module that defines the 802.15.4 driver peripheral usage for nRF54H family.
  *
  */
 
-#ifndef NRF_802154_PERIPHERALS_NRF54_H__
-#define NRF_802154_PERIPHERALS_NRF54_H__
+#ifndef NRF_802154_PERIPHERALS_NRF54H_H__
+#define NRF_802154_PERIPHERALS_NRF54H_H__
 
 #include <nrfx.h>
 #include "nrf_802154_config.h"
-#include "nrf_802154_debug.h"
 #include "nrf_802154_sl_periphs.h"
 
 #ifdef __cplusplus
@@ -57,7 +30,7 @@ extern "C" {
  *
  */
 #ifndef NRF_802154_EGU_INSTANCE_NO
-#define NRF_802154_EGU_INSTANCE_NO 10
+#define NRF_802154_EGU_INSTANCE_NO 020
 #endif
 
 /**
@@ -83,53 +56,6 @@ extern "C" {
     NRFX_CONCAT_3(EGU, NRF_802154_EGU_INSTANCE_NO, _IRQHandler)
 
 /**
- * @def NRF_802154_EGU_IRQN
- *
- * The SWI EGU IRQ number used by the driver for requests and notifications if SWI is in use.
- *
- * @note This option is used when the driver uses SWI to process requests and notifications.
- *
- */
-#define NRF_802154_EGU_IRQN \
-    NRFX_CONCAT_3(EGU, NRF_802154_EGU_INSTANCE_NO, _IRQn)
-
-/**
- * @def NRF_802154_CCM_INSTANCE_NO
- *
- * Id of the CCM instance used by the driver to encrypt outgoing frames.
- *
- * @note This option is used when @ref NRF_802154_ACCELERATOR_CCM is set.
- *
- */
-#define NRF_802154_CCM_INSTANCE_NO   00
-
-/**
- * @def NRF_802154_CCM_INSTANCE
- *
- * The CCM instance used by the driver to encrypt outgoing frames.
- *
- * @note This option is used when @ref NRF_802154_ACCELERATOR_CCM is set.
- *
- */
-#define NRF_802154_CCM_INSTANCE      NRFX_CONCAT_2(NRF_CCM, NRF_802154_CCM_INSTANCE_NO)
-
-/**
- * @def NRF_802154_DPPIC_INSTANCE_NO
- *
- * Id of the DPPIC instance used by the driver to connect peripherals to radio.
- *
- */
-#define NRF_802154_DPPIC_INSTANCE_NO 10
-
-/**
- * @def NRF_802154_DPPIC_INSTANCE
- *
- * The DPPIC instance used by the driver to connect peripherals to radio.
- *
- */
-#define NRF_802154_DPPIC_INSTANCE    NRFX_CONCAT_2(NRF_DPPIC, NRF_802154_DPPIC_INSTANCE_NO)
-
-/**
  * @def NRF_802154_EGU_RAMP_UP_EVENT
  *
  * The EGU event used by the driver to trigger radio ramp-up.
@@ -153,6 +79,26 @@ extern "C" {
 #endif
 
 /**
+ * @def NRF_802154_CCM_INSTANCE_NO
+ *
+ * Id of the CCM instance used by the driver to encrypt outgoing frames.
+ *
+ * @note This option is used when @ref NRF_802154_ACCELERATOR_CCM is set.
+ *
+ */
+#define NRF_802154_CCM_INSTANCE_NO 030
+
+/**
+ * @def NRF_802154_CCM_INSTANCE
+ *
+ * The CCM instance used by the driver to encrypt outgoing frames.
+ *
+ * @note This option is used when @ref NRF_802154_ACCELERATOR_CCM is set.
+ *
+ */
+#define NRF_802154_CCM_INSTANCE    NRFX_CONCAT_2(NRF_CCM, NRF_802154_CCM_INSTANCE_NO)
+
+/**
  * @def NRF_802154_RTC_INSTANCE_NO
  *
  * Number of the RTC instance used in the standalone timer driver implementation.
@@ -161,6 +107,22 @@ extern "C" {
 #ifndef NRF_802154_RTC_INSTANCE_NO
 #define NRF_802154_RTC_INSTANCE_NO 2
 #endif
+
+/**
+ * @def NRF_802154_DPPIC_INSTANCE_NO
+ *
+ * Id of the DPPIC instance used by the driver to connect peripherals to radio.
+ *
+ */
+#define NRF_802154_DPPIC_INSTANCE_NO 020
+
+/**
+ * @def NRF_802154_DPPIC_INSTANCE
+ *
+ * The DPPIC instance used by the driver to connect peripherals to radio.
+ *
+ */
+#define NRF_802154_DPPIC_INSTANCE    NRFX_CONCAT_2(NRF_DPPIC, NRF_802154_DPPIC_INSTANCE_NO)
 
 /**
  * @def NRF_802154_DPPI_RADIO_DISABLED
@@ -175,15 +137,27 @@ extern "C" {
 #endif
 
 /**
- * @def NRF_802154_DPPI_RADIO_TXREADY
+ * @def NRF_802154_DPPI_RADIO_READY
  *
- * The DPPI channel that publishes RADIO_TXREADY event.
+ * The DPPI channel that publishes RADIO_READY event.
  *
  * @note This option is used by the core module regardless of the driver configuration.
  *
  */
+#ifndef NRF_802154_DPPI_RADIO_READY
+#define NRF_802154_DPPI_RADIO_READY 4U
+#endif
+
+/**
+ * @def NRF_802154_DPPI_RADIO_TXREADY
+ *
+ * The DPPI channel that publishes RADIO_TXREADY event.
+ *
+ * @note This option is used if @ref NRF_802154_ENCRYPTION_ENABLED is set.
+ *
+ */
 #ifndef NRF_802154_DPPI_RADIO_TXREADY
-#define NRF_802154_DPPI_RADIO_TXREADY 4U
+#define NRF_802154_DPPI_RADIO_TXREADY 3U
 #endif
 
 /**
@@ -297,6 +271,7 @@ extern "C" {
 #ifndef NRF_802154_DPPI_CHANNELS_USED_MASK
 #define NRF_802154_DPPI_CHANNELS_USED_MASK (                   \
         (1UL << NRF_802154_DPPI_RADIO_DISABLED) |              \
+        (1UL << NRF_802154_DPPI_RADIO_READY) |                 \
         (1UL << NRF_802154_DPPI_RADIO_TXREADY) |               \
         (1UL << NRF_802154_DPPI_RADIO_ADDRESS) |               \
         (1UL << NRF_802154_DPPI_RADIO_END) |                   \
@@ -324,10 +299,10 @@ extern "C" {
  * Number of the timer instance used both by the driver for ACK IFS and by the FEM module.
  *
  */
-#define NRF_802154_TIMER_INSTANCE_NO 10
+#define NRF_802154_TIMER_INSTANCE_NO 022
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // NRF_802154_PERIPHERALS_NRF54_H__
+#endif // NRF_802154_PERIPHERALS_NRF54H_H__

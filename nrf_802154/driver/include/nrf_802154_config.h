@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2022, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2023, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -40,6 +40,10 @@
 #endif
 
 #include <nrfx.h>
+
+#if NRF_802154_USE_INTERNAL_INCLUDES
+#include "nrf_802154_config_internal.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -199,21 +203,6 @@ extern "C" {
 #endif
 
 /**
- * @def NRF_802154_DISABLE_BCC_MATCHING
- *
- * Setting this flag disables NRF_RADIO_EVENT_BCMATCH handling, and therefore the address filtering
- * during the frame reception. With this flag set to 1, the address filtering is done after
- * receiving a frame, during NRF_RADIO_EVENT_END handling.
- *
- * @note This option is incompatible with antenna diversity. If set to 1, antenna diversity
- * must not be used.
- *
- */
-#ifndef NRF_802154_DISABLE_BCC_MATCHING
-#define NRF_802154_DISABLE_BCC_MATCHING 0
-#endif
-
-/**
  * @def NRF_802154_NOTIFY_CRCERROR
  *
  * With this flag set to 1, the CRC errors are notified to upper layers. This requires an interrupt
@@ -238,19 +227,6 @@ extern "C" {
  */
 #ifndef NRF_802154_FRAME_TIMESTAMP_ENABLED
 #define NRF_802154_FRAME_TIMESTAMP_ENABLED 1
-#endif
-
-/**
- * @def NRF_802154_TOTAL_TIMES_MEASUREMENT_ENABLED
- *
- * If measurement of total time spent in certain states is to be calculated.
- *
- * This option can be enabled when @ref NRF_802154_FRAME_TIMESTAMP_ENABLED is 1
- * and @ref NRF_802154_DISABLE_BCC_MATCHING is 0.
- */
-#ifndef NRF_802154_TOTAL_TIMES_MEASUREMENT_ENABLED
-#define NRF_802154_TOTAL_TIMES_MEASUREMENT_ENABLED \
-    (1 && NRF_802154_FRAME_TIMESTAMP_ENABLED && !NRF_802154_DISABLE_BCC_MATCHING)
 #endif
 
 /**
@@ -431,22 +407,6 @@ extern "C" {
  */
 
 /**
- * @def NRF_802154_TX_STARTED_NOTIFY_ENABLED
- *
- * Indicates whether the notifications of the started transmissions are to be enabled in the driver.
- *
- * @note This feature is enabled by default if the ACK timeout feature or CSMA-CA is enabled.
- *       These features depend on the notifications of the transmission start.
- */
-#ifndef NRF_802154_TX_STARTED_NOTIFY_ENABLED
-#if NRF_802154_ACK_TIMEOUT_ENABLED || NRF_802154_CSMA_CA_ENABLED
-#define NRF_802154_TX_STARTED_NOTIFY_ENABLED 1
-#else
-#define NRF_802154_TX_STARTED_NOTIFY_ENABLED 0
-#endif
-#endif // NRF_802154_TX_STARTED_NOTIFY_ENABLED
-
-/**
  * @}
  * @defgroup nrf_802154_config_coex WiFi coexistence feature configuration
  * @{
@@ -530,29 +490,12 @@ extern "C" {
 #endif
 
 /**
- * @def NRF_802154_ACCELERATOR_CCM
+ * @def NRF_802154_ENCRYPTION_ACCELERATOR_ECB
  *
- * Selects CCM peripheral to be used as an accelerator for on-the-fly CCM encryption.
+ * Enables ECB peripheral to be used as hardware accelerator for on-the-fly AES-CCM* encryption.
  */
-#ifndef NRF_802154_ACCELERATOR_CCM
-#if defined(HALTIUM_XXAA) || defined(MOONLIGHT_XXAA)
-#define NRF_802154_ACCELERATOR_CCM 1
-#else
-#define NRF_802154_ACCELERATOR_CCM 0
-#endif
-#endif
-
-/**
- * @def NRF_802154_ACCELERATOR_ECB
- *
- * Selects ECB peripheral to be used as an accelerator for on-the-fly CCM encryption.
- */
-#ifndef NRF_802154_ACCELERATOR_ECB
-#if defined(HALTIUM_XXAA) || defined(MOONLIGHT_XXAA)
-#define NRF_802154_ACCELERATOR_ECB 0
-#else
-#define NRF_802154_ACCELERATOR_ECB 1
-#endif
+#ifndef NRF_802154_ENCRYPTION_ACCELERATOR_ECB
+#define NRF_802154_ENCRYPTION_ACCELERATOR_ECB 1
 #endif
 
 /**

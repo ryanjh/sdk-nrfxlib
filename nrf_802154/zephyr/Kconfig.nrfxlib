@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2020 - 2022 Nordic Semiconductor ASA
+# Copyright (c) 2020 - 2023 Nordic Semiconductor ASA
 #
 # SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
 #
@@ -47,20 +47,6 @@ config NRF_802154_SL_LPTIMER_RTC
 	def_bool y
 	depends on NRF_RTC_TIMER
 
-config NRF_802154_SL_LPTIMER_GRTC
-	def_bool y
-	depends on SOC_PLATFORM_HALTIUM || SOC_PLATFORM_NRF54L
-
-config NRF_802154_SL_LPTIMER_EVENTS_HALTIUM
-	def_bool y
-	depends on NRF_802154_SL_LPTIMER_GRTC
-	depends on SOC_PLATFORM_HALTIUM
-
-config NRF_802154_SL_LPTIMER_EVENTS_NRF54L
-	def_bool y
-	depends on NRF_802154_SL_LPTIMER_GRTC
-	depends on SOC_PLATFORM_NRF54L
-
 config NRF_802154_SL_HPTIMER
 	def_bool y
 	depends on SOC_SERIES_NRF52X || SOC_SERIES_NRF53X
@@ -68,3 +54,5 @@ config NRF_802154_SL_HPTIMER
 endif # NRF_802154_SL
 
 endif # NRF_802154_RADIO_DRIVER
+
+orsource "../internal/Kconfig.nrfxlib"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2022, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2023, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -41,8 +41,6 @@
 #if !defined(UNIT_TEST)
 // Don't use directly. Use provided nrf_802154_stat_xxxx API macros.
 extern volatile nrf_802154_stats_t g_nrf_802154_stats;
-
-extern volatile nrf_802154_stat_totals_t g_nrf_802154_stat_totals;
 
 /**@brief Increment one of the @ref nrf_802154_stat_counters_t fields.
  *
@@ -86,19 +84,6 @@ extern volatile nrf_802154_stat_totals_t g_nrf_802154_stat_totals;
         nrf_802154_mcu_critical_exit(mcu_cs);                   \
     }                                                           \
     while (0)
-
-#define nrf_802154_stat_totals_increment(field_name, value) \
-    do                                                      \
-    {                                                       \
-        nrf_802154_mcu_critical_state_t mcu_cs;             \
-                                                            \
-        nrf_802154_mcu_critical_enter(mcu_cs);              \
-        (g_nrf_802154_stat_totals.field_name) += (value);   \
-        nrf_802154_mcu_critical_exit(mcu_cs);               \
-    }                                                       \
-    while (0)
-
-extern void nrf_802154_stat_totals_get_notify(void);
 
 #else // !defined(UNIT_TEST)
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 - 2022, Nordic Semiconductor ASA
+ * Copyright (c) 2021 - 2023, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -32,16 +32,18 @@
  *
  */
 
-#include "nrf_802154_aes_ccm.h"
 #include "nrf_802154_config.h"
 
-#if NRF_802154_ACCELERATOR_ECB
+#if NRF_802154_ENCRYPTION_ACCELERATOR_ECB
+
+#include "nrf_802154_aes_ccm.h"
 
 #include <assert.h>
 #include <string.h>
 
 #include "hal/nrf_ecb.h"
 #include "nrf_802154_const.h"
+#include "nrf_802154_config.h"
 #include "nrf_802154_tx_work_buffer.h"
 #include "platform/nrf_802154_irq.h"
 
@@ -126,7 +128,7 @@ static void ecb_init(void)
 {
     if (!m_initialized)
     {
-        nrf_802154_irq_init(ECB_IRQn, NRF_802154_ECB_PRIORITY, ecb_irq_handler);
+        nrf_802154_irq_init(nrfx_get_irq_number(NRF_ECB), NRF_802154_ECB_PRIORITY, ecb_irq_handler);
         m_initialized = true;
     }
 
@@ -134,8 +136,8 @@ static void ecb_init(void)
     // TODO: what about ECB initialization in baremetal scenario?
     nrf_ecb_init();
 
-    nrf_802154_irq_clear_pending(ECB_IRQn);
-    nrf_802154_irq_enable(ECB_IRQn);
+    nrf_802154_irq_clear_pending(nrfx_get_irq_number(NRF_ECB));
+    nrf_802154_irq_enable(nrfx_get_irq_number(NRF_ECB));
     nrf_ecb_int_enable(NRF_ECB, NRF_ECB_INT_ENDECB_MASK);
     nrf_ecb_int_enable(NRF_ECB, NRF_ECB_INT_ERRORECB_MASK);
 }
@@ -579,4 +581,4 @@ void nrf_802154_aes_ccm_transform_abort(uint8_t * p_frame)
     m_aes_ccm_data.raw_frame = NULL;
 }
 
-#endif // NRF_802154_CONFIG_ACCEL_ECB
+#endif /* NRF_802154_ENCRYPTION_ACCELERATOR_ECB */

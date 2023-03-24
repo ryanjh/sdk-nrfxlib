@@ -23,7 +23,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include <nrfx.h>
+#include <nrf.h>
 #include "nrf_errno.h"
 
 /** @brief PA and LNA functionality types. */

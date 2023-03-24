@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 - 2022, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2023, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -45,7 +45,6 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <nrfx.h>
 
 #include "../nrf_802154_debug.h"
 #include "nrf_802154_config.h"
@@ -63,20 +62,18 @@
 #include "nrf_802154_sl_utils.h"
 #include "nrf_802154_sl_atomics.h"
 
+#ifdef NRF_802154_USE_INTERNAL_INCLUDES
+#include "nrf_802154_delayed_trx_internal.h"
+#endif
+
 #if NRF_802154_DELAYED_TRX_ENABLED
 
 #if defined(NRF52_SERIES)
-#define TX_SETUP_TIME_MAX 270u  ///< Maximum time needed to prepare TX procedure [us]. It does not include TX ramp-up time.
-#define RX_SETUP_TIME_MAX 270u  ///< Maximum time needed to prepare RX procedure [us]. It does not include RX ramp-up time.
+#define TX_SETUP_TIME_MAX 270u ///< Maximum time needed to prepare TX procedure [us]. It does not include TX ramp-up time.
+#define RX_SETUP_TIME_MAX 270u ///< Maximum time needed to prepare RX procedure [us]. It does not include RX ramp-up time.
 #elif defined(NRF53_SERIES)
-#define TX_SETUP_TIME_MAX 360u  ///< Maximum time needed to prepare TX procedure [us]. It does not include TX ramp-up time.
-#define RX_SETUP_TIME_MAX 290u  ///< Maximum time needed to prepare RX procedure [us]. It does not include RX ramp-up time.
-#elif (defined(HALTIUM_XXAA) || defined(MOONLIGHT_XXAA)) && defined(BOARD_FPGA)
-#define TX_SETUP_TIME_MAX 1600u ///< Maximum time needed to prepare TX procedure [us]. It does not include TX ramp-up time.
-#define RX_SETUP_TIME_MAX 1600u ///< Maximum time needed to prepare RX procedure [us]. It does not include RX ramp-up time.
-#elif defined(HALTIUM_XXAA)
-#define TX_SETUP_TIME_MAX 400u  ///< Maximum time needed to prepare TX procedure [us]. It does not include TX ramp-up time.
-#define RX_SETUP_TIME_MAX 400u  ///< Maximum time needed to prepare RX procedure [us]. It does not include RX ramp-up time.
+#define TX_SETUP_TIME_MAX 360u ///< Maximum time needed to prepare TX procedure [us]. It does not include TX ramp-up time.
+#define RX_SETUP_TIME_MAX 290u ///< Maximum time needed to prepare RX procedure [us]. It does not include RX ramp-up time.
 #endif
 
 /**
@@ -215,7 +212,10 @@ static bool dly_op_state_set(dly_op_data_t        * p_dly_op_data,
         case RSCH_DLY_TS_OP_DTX:
         case RSCH_DLY_TS_OP_DRX:
         {
-            result = nrf_802154_sl_atomic_cas_u8(&p_dly_op_data->state, &expected_state, new_state);
+            result = nrf_802154_sl_atomic_cas_u8(
+                (uint8_t *)&p_dly_op_data->state,
+                (uint8_t *)&expected_state,
+                new_state);
 
             if (result)
             {
@@ -614,16 +614,21 @@ static bool receive_attempt(dly_op_data_t * p_dly_op_data)
 {
     nrf_802154_log_function_enter(NRF_802154_LOG_VERBOSITY_HIGH);
 
-    bool result = false;
+    bool result                 = false;
+    bool channel_update_success = true;
 
     // This function is expected to result in calling @ref dly_rx_result_notify.
     // In order for that function to differentiate between different delayed RX
     // windows, we atomically insert the ID of the current delayed RX into a FIFO queue.
     dly_rx_data_atomically_push(p_dly_op_data);
 
-    nrf_802154_pib_channel_set(p_dly_op_data->rx.channel);
+    if (nrf_802154_pib_channel_get() != p_dly_op_data->rx.channel)
+    {
+        nrf_802154_pib_channel_set(p_dly_op_data->rx.channel);
+        channel_update_success = nrf_802154_request_channel_update(REQ_ORIG_DELAYED_TRX);
+    }
 
-    if (nrf_802154_request_channel_update(REQ_ORIG_DELAYED_TRX))
+    if (channel_update_success)
     {
         result = nrf_802154_request_receive(NRF_802154_TERM_802154,
                                             REQ_ORIG_DELAYED_TRX,
@@ -633,7 +638,7 @@ static bool receive_attempt(dly_op_data_t * p_dly_op_data)
     }
     else
     {
-        dly_rx_result_notify(false);
+        dly_rx_result_notify(result);
     }
 
     nrf_802154_log_function_exit(NRF_802154_LOG_VERBOSITY_HIGH);
@@ -889,7 +894,8 @@ bool nrf_802154_delayed_trx_receive_cancel(uint32_t id)
         p_dly_op_data->id = NRF_802154_RESERVED_INVALID_ID;
         stopped           = true;
 
-        nrf_802154_sl_atomic_store_u8(&p_dly_op_data->state, DELAYED_TRX_OP_STATE_STOPPED);
+        nrf_802154_sl_atomic_store_u8((uint8_t *)&p_dly_op_data->state,
+                                      DELAYED_TRX_OP_STATE_STOPPED);
     }
 
     return stopped;
@@ -942,6 +948,7 @@ bool nrf_802154_delayed_trx_nearest_drx_time_to_midpoint_get(uint32_t * p_drx_ti
     uint32_t min_time_to_start = 0xffffffff;
     uint64_t drx_time_to_start = UINT64_C(0xffffffff);
     uint32_t drx_time_to_midpoint;
+    uint32_t drx_window_duration_time;
 
     for (int i = 0; i < sizeof(m_dly_rx_data) / sizeof(m_dly_rx_data[0]); i++)
     {
@@ -958,7 +965,9 @@ bool nrf_802154_delayed_trx_nearest_drx_time_to_midpoint_get(uint32_t * p_drx_ti
         {
             min_time_to_start = drx_time_to_start < min_time_to_start ?
                                 (uint32_t)drx_time_to_start : min_time_to_start;
-            drx_time_to_midpoint = min_time_to_start + m_dly_rx_data[i].rx.timeout_length / 2;
+            drx_window_duration_time = m_dly_rx_data[i].rx.timeout_length -
+                                       (RX_SETUP_TIME_MAX + RX_RAMP_UP_TIME);
+            drx_time_to_midpoint = min_time_to_start + drx_window_duration_time / 2;
         }
     }
 

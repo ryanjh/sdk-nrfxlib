@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 - 2022, Nordic Semiconductor ASA
+ * Copyright (c) 2019 - 2023, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -85,19 +85,6 @@ extern "C" {
     NRFX_CONCAT_3(NRFX_CONCAT_3(SWI, NRF_802154_EGU_INSTANCE_NO, _EGU), \
                   NRF_802154_EGU_INSTANCE_NO,                           \
                   _IRQHandler)
-
-/**
- * @def NRF_802154_EGU_IRQN
- *
- * The SWI EGU IRQ number used by the driver for requests and notifications if SWI is in use.
- *
- * @note This option is used when the driver uses SWI to process requests and notifications.
- *
- */
-#define NRF_802154_EGU_IRQN                                             \
-    NRFX_CONCAT_3(NRFX_CONCAT_3(SWI, NRF_802154_EGU_INSTANCE_NO, _EGU), \
-                  NRF_802154_EGU_INSTANCE_NO,                           \
-                  _IRQn)
 
 /**
  * @def NRF_802154_RTC_INSTANCE_NO
@@ -219,54 +206,11 @@ extern "C" {
 #define NRF_802154_PPI_RADIO_CRCOK_TO_PPI_GRP_DISABLE NRF_PPI_CHANNEL10
 #endif
 
-#if NRF_802154_DISABLE_BCC_MATCHING
-
-/**
- * @def NRF_802154_PPI_RADIO_ADDR_TO_COUNTER_COUNT
- *
- * The PPI channel that connects RADIO_ADDRESS event to TIMER_COUNT task.
- *
- * @note This configuration is used only when the NRF_RADIO_EVENT_BCMATCH event handling is disabled
- *       (see @ref NRF_802154_DISABLE_BCC_MATCHING).
- *
- */
-#ifndef NRF_802154_PPI_RADIO_ADDR_TO_COUNTER_COUNT
-#define NRF_802154_PPI_RADIO_ADDR_TO_COUNTER_COUNT NRF_PPI_CHANNEL11
-#endif
-
-/**
- * @def NRF_802154_PPI_RADIO_CRCERROR_TO_COUNTER_CLEAR
- *
- * The PPI channel that connects RADIO_CRCERROR event to TIMER_CLEAR task.
- *
- * @note This option is used only when the NRF_RADIO_EVENT_BCMATCH event handling is disabled
- *       (see @ref NRF_802154_DISABLE_BCC_MATCHING).
- *
- */
-#ifndef NRF_802154_PPI_RADIO_CRCERROR_COUNTER_CLEAR
-#define NRF_802154_PPI_RADIO_CRCERROR_COUNTER_CLEAR NRF_PPI_CHANNEL12
-#endif
-
-/**
- * @def NRF_802154_DISABLE_BCC_MATCHING_PPI_CHANNELS_USED_MASK
- *
- * Helper bit mask of PPI channels used additionally by the 802.15.4 driver when the BCC matching
- * is disabled.
- */
-#define NRF_802154_DISABLE_BCC_MATCHING_PPI_CHANNELS_USED_MASK \
-    ((1 << NRF_802154_PPI_RADIO_ADDR_TO_COUNTER_COUNT) |       \
-     (1 << NRF_802154_PPI_RADIO_CRCERROR_COUNTER_CLEAR))
-
-#else // NRF_802154_DISABLE_BCC_MATCHING
-
 /**
  * @def NRF_802154_PPI_RADIO_SYNC_TO_EGU_SYNC
  *
  * The PPI channel that connects RADIO_SYNC event to EGU_SYNC task.
  * EGU_SYNC task belongs to one of EGU channels
- *
- * @note This configuration is used only when the NRF_RADIO_EVENT_BCMATCH event handling is enabled
- *       (see @ref NRF_802154_DISABLE_BCC_MATCHING).
  *
  */
 #ifndef NRF_802154_PPI_RADIO_SYNC_TO_EGU_SYNC
@@ -275,8 +219,6 @@ extern "C" {
 
 #define NRF_802154_DISABLE_BCC_MATCHING_PPI_CHANNELS_USED_MASK \
     (1 << NRF_802154_PPI_RADIO_SYNC_TO_EGU_SYNC)
-
-#endif // NRF_802154_DISABLE_BCC_MATCHING
 
 #ifdef NRF_802154_FRAME_TIMESTAMP_ENABLED
 

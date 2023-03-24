@@ -1,41 +1,17 @@
 /*
- * Copyright (c) 2021, Nordic Semiconductor ASA
- * All rights reserved.
+ * Copyright (c) 2023, Nordic Semiconductor ASA. All Rights Reserved.
  *
- * SPDX-License-Identifier: BSD-3-Clause
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
- *    contributors may be used to endorse or promote products derived from this
- *    software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY, AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
+ * The information contained herein is confidential property of Nordic Semiconductor ASA.
+ * The use, copying, transfer or disclosure of such information is prohibited except by
+ * express written agreement with Nordic Semiconductor ASA.
  */
 
 #include "nrf_802154_aes_ccm.h"
 #include "nrf_802154_config.h"
 
-#if NRF_802154_ACCELERATOR_CCM
+#if NRF_802154_ENCRYPTION_ENABLED && !NRF_802154_ENCRYPTION_ACCELERATOR_ECB
+
+#define CCM_PS_COMPLIANT 0 // Configure CCM in compliance with product specification. Does not support information elements.
 
 #include <assert.h>
 #include <string.h>
@@ -50,8 +26,15 @@
 #include "hal/nrf_dppi.h"
 #include "hal/nrf_ppib.h"
 
-#if !defined(MOONLIGHT_XXAA)
+#if defined(HALTIUM_XXAA)
 #include "hal/nrf_spu.h"
+#define PPIB_RAD  NRF_PPIB020
+#define PPIB_CCM  NRF_PPIB030
+#define DPPIC_CCM NRF_DPPIC030
+#elif defined(MOONLIGHT_XXAA)
+#define PPIB_RAD  NRF_PPIB10
+#define PPIB_CCM  NRF_PPIB00
+#define DPPIC_CCM NRF_DPPIC00
 #endif
 
 typedef struct
@@ -68,15 +51,16 @@ typedef struct
     } out;
 } ccm_params_t;
 
-__ALIGN(8) static nrf_vdma_job_t in_job_list[5];  ///< CCM DMA input job list array.
-__ALIGN(8) static nrf_vdma_job_t out_job_list[5]; ///< CCM DMA output job list array.
+__ALIGN(8) static nrf_vdma_job_t m_in_job_list[5];  ///< CCM DMA input job list array.
+__ALIGN(8) static nrf_vdma_job_t m_out_job_list[5]; ///< CCM DMA output job list array.
 
-static ccm_params_t ccm_params;                   ///< CCM peripheral parameters.
-static bool         m_initialized;                ///< Module init status.
+static ccm_params_t m_ccm_params;                   ///< CCM peripheral parameters.
+static bool         m_initialized;                  ///< Module init status.
 
 static void ccm_disable(void)
 {
     nrf_802154_irq_disable(nrfx_get_irq_number(NRF_802154_CCM_INSTANCE));
+    nrf_dppi_channels_disable(DPPIC_CCM, (1 << NRF_802154_DPPI_RADIO_TXREADY));
     nrf_ccm_subscribe_clear(NRF_802154_CCM_INSTANCE, NRF_CCM_TASK_START);
     nrf_ccm_subscribe_clear(NRF_802154_CCM_INSTANCE, NRF_CCM_TASK_STOP);
     nrf_ccm_int_disable(NRF_802154_CCM_INSTANCE, NRF_CCM_INT_ERROR_MASK | NRF_CCM_INT_END_MASK);
@@ -165,34 +149,43 @@ static bool ccm_configure(const nrf_802154_aes_ccm_data_t * p_aes_ccm_data,
     u8_string_to_u32x4_big_endian(p_aes_ccm_data->nonce, sizeof(p_aes_ccm_data->nonce), nonce);
 
     // CCM peripheral job list integer params pointed by p_job_ptr must have big-endian byte order.
-    host_16_to_little(p_aes_ccm_data->auth_data_len, (uint8_t *)&ccm_params.in.alen);
-    host_16_to_little(p_aes_ccm_data->plain_text_data_len, (uint8_t *)&ccm_params.in.mlen);
+    host_16_to_little(p_aes_ccm_data->auth_data_len, (uint8_t *)&m_ccm_params.in.alen);
+    host_16_to_little(p_aes_ccm_data->plain_text_data_len, (uint8_t *)&m_ccm_params.in.mlen);
 
-    nrf_vdma_job_fill(&in_job_list[0], &ccm_params.in.alen, sizeof(ccm_params.in.alen), 11);
-    nrf_vdma_job_fill(&in_job_list[1], &ccm_params.in.mlen, sizeof(ccm_params.in.mlen), 12);
-    nrf_vdma_job_fill(&in_job_list[2],
+    nrf_vdma_job_fill(&m_in_job_list[0], &m_ccm_params.in.alen, sizeof(m_ccm_params.in.alen), 11);
+    nrf_vdma_job_fill(&m_in_job_list[1], &m_ccm_params.in.mlen, sizeof(m_ccm_params.in.mlen), 12);
+    nrf_vdma_job_fill(&m_in_job_list[2],
                       p_aes_ccm_data->auth_data,
                       p_aes_ccm_data->auth_data_len,
                       13);
-    nrf_vdma_job_fill(&in_job_list[3],
+    nrf_vdma_job_fill(&m_in_job_list[3],
                       p_aes_ccm_data->plain_text_data,
                       p_aes_ccm_data->plain_text_data_len,
                       14);
-    nrf_vdma_job_terminate(&in_job_list[4]);
+    nrf_vdma_job_terminate(&m_in_job_list[4]);
 
-    nrf_vdma_job_fill(&out_job_list[0], &ccm_params.out.alen, sizeof(ccm_params.out.alen), 11);
-    nrf_vdma_job_fill(&out_job_list[1], &ccm_params.out.mlen, sizeof(ccm_params.out.mlen), 12);
-    nrf_vdma_job_fill(&out_job_list[2], p_adata, p_aes_ccm_data->auth_data_len, 13);
-    nrf_vdma_job_fill(&out_job_list[3], p_mdata, p_aes_ccm_data->plain_text_data_len + macsize, 14);
-    nrf_vdma_job_terminate(&out_job_list[4]);
+    nrf_vdma_job_fill(&m_out_job_list[0],
+                      &m_ccm_params.out.alen,
+                      sizeof(m_ccm_params.out.alen),
+                      11);
+    nrf_vdma_job_fill(&m_out_job_list[1],
+                      &m_ccm_params.out.mlen,
+                      sizeof(m_ccm_params.out.mlen),
+                      12);
+    nrf_vdma_job_fill(&m_out_job_list[2], p_adata, p_aes_ccm_data->auth_data_len, 13);
+    nrf_vdma_job_fill(&m_out_job_list[3],
+                      p_mdata,
+                      p_aes_ccm_data->plain_text_data_len + macsize,
+                      14);
+    nrf_vdma_job_terminate(&m_out_job_list[4]);
 
     if (!m_initialized)
     {
         // DMASEC is set to non-secure by default, which prevents the CCM from accessing
         // secure memory. Change the DMASEC to secure.
-        #if !defined(MOONLIGHT_XXAA)
+#if defined(HALTIUM_XXAA)
         nrf_spu_periph_perm_dmasec_set(NRF_SPU030, 10, true);
-        #endif
+#endif
         nrf_802154_irq_init(nrfx_get_irq_number(NRF_802154_CCM_INSTANCE),
                             NRF_802154_ECB_PRIORITY,
                             ccm_irq_handler);
@@ -206,64 +199,42 @@ static bool ccm_configure(const nrf_802154_aes_ccm_data_t * p_aes_ccm_data,
     nrf_ccm_configure(NRF_802154_CCM_INSTANCE, &ccm_config);
     nrf_ccm_key_set(NRF_802154_CCM_INSTANCE, key);
     nrf_ccm_nonce_set(NRF_802154_CCM_INSTANCE, nonce);
-    nrf_ccm_in_ptr_set(NRF_802154_CCM_INSTANCE, in_job_list);
-    nrf_ccm_out_ptr_set(NRF_802154_CCM_INSTANCE, out_job_list);
+    nrf_ccm_in_ptr_set(NRF_802154_CCM_INSTANCE, m_in_job_list);
+    nrf_ccm_out_ptr_set(NRF_802154_CCM_INSTANCE, m_out_job_list);
     nrf_ccm_event_clear(NRF_802154_CCM_INSTANCE, NRF_CCM_EVENT_ERROR);
     nrf_ccm_event_clear(NRF_802154_CCM_INSTANCE, NRF_CCM_EVENT_END);
     nrf_ccm_int_enable(NRF_802154_CCM_INSTANCE, NRF_CCM_INT_ERROR_MASK | NRF_CCM_INT_END_MASK);
     nrf_ccm_adatamask_set(NRF_802154_CCM_INSTANCE, 0xff);
 
-#ifndef MOONLIGHT_XXAA
-    nrf_ppib_subscribe_set(NRF_PPIB020,
-                           nrf_ppib_send_task_get(NRF_802154_DPPI_RADIO_TXREADY),
-                           NRF_802154_DPPI_RADIO_TXREADY);
-    nrf_ppib_publish_set(NRF_PPIB030,
-                         nrf_ppib_receive_event_get(NRF_802154_DPPI_RADIO_TXREADY),
-                         NRF_802154_DPPI_RADIO_TXREADY);
+    uint32_t dppi_ch_to_enable = (1 << NRF_802154_DPPI_RADIO_DISABLED);
 
-    nrf_ppib_subscribe_set(NRF_PPIB020,
+    nrf_ppib_subscribe_set(PPIB_RAD,
                            nrf_ppib_send_task_get(NRF_802154_DPPI_RADIO_DISABLED),
                            NRF_802154_DPPI_RADIO_DISABLED);
-    nrf_ppib_publish_set(NRF_PPIB030,
+    nrf_ppib_publish_set(PPIB_CCM,
                          nrf_ppib_receive_event_get(NRF_802154_DPPI_RADIO_DISABLED),
                          NRF_802154_DPPI_RADIO_DISABLED);
 
-    nrf_dppi_channels_enable(NRF_DPPIC030,
-                             (1 << NRF_802154_DPPI_RADIO_TXREADY) |
-                             (1 << NRF_802154_DPPI_RADIO_DISABLED));
+#if CCM_PS_COMPLIANT
+    nrf_ppib_subscribe_set(PPIB_RAD,
+                           nrf_ppib_send_task_get(NRF_802154_DPPI_RADIO_TXREADY),
+                           NRF_802154_DPPI_RADIO_TXREADY);
+    nrf_ppib_publish_set(PPIB_CCM,
+                         nrf_ppib_receive_event_get(NRF_802154_DPPI_RADIO_TXREADY),
+                         NRF_802154_DPPI_RADIO_TXREADY);
 
     nrf_ccm_subscribe_set(NRF_802154_CCM_INSTANCE,
                           NRF_CCM_TASK_START,
                           NRF_802154_DPPI_RADIO_TXREADY);
-    nrf_ccm_subscribe_set(NRF_802154_CCM_INSTANCE,
-                          NRF_CCM_TASK_STOP,
-                          NRF_802154_DPPI_RADIO_DISABLED);
-#else
-    nrf_ppib_subscribe_set(NRF_PPIB10,
-                           nrf_ppib_send_task_get(NRF_802154_DPPI_RADIO_TXREADY),
-                           NRF_802154_DPPI_RADIO_TXREADY);
-    nrf_ppib_publish_set(NRF_PPIB00,
-                         nrf_ppib_receive_event_get(NRF_802154_DPPI_RADIO_TXREADY),
-                         NRF_802154_DPPI_RADIO_TXREADY);
 
-    nrf_ppib_subscribe_set(NRF_PPIB10,
-                           nrf_ppib_send_task_get(NRF_802154_DPPI_RADIO_DISABLED),
-                           NRF_802154_DPPI_RADIO_DISABLED);
-    nrf_ppib_publish_set(NRF_PPIB00,
-                         nrf_ppib_receive_event_get(NRF_802154_DPPI_RADIO_DISABLED),
-                         NRF_802154_DPPI_RADIO_DISABLED);
-
-    nrf_dppi_channels_enable(NRF_DPPIC00,
-                             (1 << NRF_802154_DPPI_RADIO_TXREADY) |
-                             (1 << NRF_802154_DPPI_RADIO_DISABLED));
-
-    nrf_ccm_subscribe_set(NRF_802154_CCM_INSTANCE,
-                          NRF_CCM_TASK_START,
-                          NRF_802154_DPPI_RADIO_TXREADY);
-    nrf_ccm_subscribe_set(NRF_802154_CCM_INSTANCE,
-                          NRF_CCM_TASK_STOP,
-                          NRF_802154_DPPI_RADIO_DISABLED);
+    dppi_ch_to_enable |= (1 << NRF_802154_DPPI_RADIO_TXREADY);
 #endif
+
+    nrf_ccm_subscribe_set(NRF_802154_CCM_INSTANCE,
+                          NRF_CCM_TASK_STOP,
+                          NRF_802154_DPPI_RADIO_DISABLED);
+
+    nrf_dppi_channels_enable(DPPIC_CCM, dppi_ch_to_enable);
 
     return true;
 }
@@ -309,15 +280,22 @@ bool nrf_802154_aes_ccm_transform_prepare(const nrf_802154_aes_ccm_data_t * p_ae
     p_work_buffer = nrf_802154_tx_work_buffer_enable_for(p_aes_ccm_data->raw_frame);
     p_ciphertext  = p_work_buffer + offset;
 
+#if CCM_PS_COMPLIANT
     memcpy(p_work_buffer, p_aes_ccm_data->raw_frame, PHR_SIZE);
     memset(&p_work_buffer[PSDU_OFFSET], 0, p_aes_ccm_data->raw_frame[PHR_OFFSET]);
+#else
+    memcpy(p_work_buffer, p_aes_ccm_data->raw_frame, offset);
+    memset(p_ciphertext, 0, p_aes_ccm_data->raw_frame[PHR_OFFSET] + PHR_SIZE - offset);
+#endif
 
     return ccm_configure(p_aes_ccm_data, p_work_buffer + PHR_SIZE, p_ciphertext);
 }
 
 void nrf_802154_aes_ccm_transform_start(uint8_t * p_frame)
 {
-    // Intentionally empty
+#if !CCM_PS_COMPLIANT
+    nrf_ccm_task_trigger(NRF_802154_CCM_INSTANCE, NRF_CCM_TASK_START);
+#endif
 }
 
 void nrf_802154_aes_ccm_transform_abort(uint8_t * p_frame)
@@ -330,4 +308,4 @@ void nrf_802154_aes_ccm_transform_reset(void)
     // Intentionally empty
 }
 
-#endif // NRF_802154_CONFIG_ACCEL_CCM
+#endif // NRF_802154_ENCRYPTION_ENABLED && !NRF_802154_ENCRYPTION_ACCELERATOR_ECB

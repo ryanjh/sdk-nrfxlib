@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2022, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2023, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -51,10 +51,10 @@
 #include "mpsl.h"
 #endif
 
-#if defined(NRF52_SERIES)
+#if defined(PPI_PRESENT)
 #define NRF_802154_PPI_CH_USED_MSK NRF_802154_PPI_CHANNELS_USED_MASK
 #define NRF_802154_PPI_GR_USED_MSK NRF_802154_PPI_GROUPS_USED_MASK
-#elif defined(NRF53_SERIES) || defined(HALTIUM_XXAA) || defined(MOONLIGHT_XXAA)
+#elif defined(DPPI_PRESENT)
 #define NRF_802154_PPI_CH_USED_MSK NRF_802154_DPPI_CHANNELS_USED_MASK
 #define NRF_802154_PPI_GR_USED_MSK NRF_802154_DPPI_GROUPS_USED_MASK
 #else

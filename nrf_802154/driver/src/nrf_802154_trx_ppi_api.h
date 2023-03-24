@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022, Nordic Semiconductor ASA
+ * Copyright (c) 2020 - 2023, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -81,11 +81,12 @@ void nrf_802154_trx_ppi_for_disable(void);
  *
  * Connections created by this function in DPPI variant and TRX_RAMP_UP_HW_TRIGGER mode:
  *
- *       [DPPI] ----------------------> ramp_up_task
- *            \-----------------------> self disable
- *             \
- *        if (start_timer)
- *               \--------------------> TIMER_START
+ *       [DPPI] -----------------------> RADIO_TASK_DISABLE
+ *
+ *       RADIO_DISABLED ----> EGU -----> ramp_up_task
+ *                      |           \--> self disable
+ *               if (start_timer)
+ *                      \--------------> TIMER_START
  *
  * Connections created by this function in PPI variant and TRX_RAMP_UP_SW_TRIGGER mode:
  *
@@ -111,6 +112,12 @@ void nrf_802154_trx_ppi_for_ramp_up_set(nrf_radio_task_t                      ra
 
 /**
  * @brief Reconfigure (D)PPIs for the next steps in receiving or transmitting.
+ *
+ * Due to limited resources on some platforms, some PPIs have many uses: when starting an operation,
+ * one is used to trigger the radio ramp up, then when the radio is "up", this PPI must be
+ * reconfigured so it can be used to disable the radio when needed.
+ * This is the PPI reconfiguration routine. It is intended to be called in the radio READY event
+ * handler.
  */
 void nrf_802154_trx_ppi_for_ramp_up_reconfigure(void);
 

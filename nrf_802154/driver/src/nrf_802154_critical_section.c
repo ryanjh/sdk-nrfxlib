@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2022, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2023, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -51,7 +51,6 @@
 #include "rsch/nrf_802154_rsch.h"
 #include "platform/nrf_802154_platform_sl_lptimer.h"
 #include "platform/nrf_802154_irq.h"
-#include "hal/nrf_radio.h"
 
 #include <nrfx.h>
 
@@ -255,9 +254,20 @@ bool nrf_802154_critical_section_is_nested(void)
 
 uint32_t nrf_802154_critical_section_active_vector_priority_get(void)
 {
+    uint32_t active_priority;
+
+#if defined(CONFIG_SOC_SERIES_BSIM_NRFXX)
+    /* The nRF52_bsim does not implement the SCB. Use its APIs to get the
+     * currently running ISR instead */
+    int irq_number = posix_get_current_irq();
+
+    if (irq_number == -1) /* not in interrupt */
+    {
+        return UINT32_MAX;
+    }
+#else
     uint32_t  active_vector_id = (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) >> SCB_ICSR_VECTACTIVE_Pos;
     IRQn_Type irq_number;
-    uint32_t  active_priority;
 
     // Check if this function is called from main thread.
     if (active_vector_id == 0)
@@ -265,12 +275,11 @@ uint32_t nrf_802154_critical_section_active_vector_priority_get(void)
         return UINT32_MAX;
     }
 
-#if !defined(HALTIUM_XXAA) || defined(BOARD_FPGA)
-    assert(active_vector_id >= CMSIS_IRQ_NUM_VECTACTIVE_DIFF);
-#endif
+    irq_number = (IRQn_Type)((int32_t)active_vector_id - CMSIS_IRQ_NUM_VECTACTIVE_DIFF);
 
-    irq_number      = (IRQn_Type)(active_vector_id - CMSIS_IRQ_NUM_VECTACTIVE_DIFF);
-    active_priority = nrf_802154_irq_priority_get(irq_number);
+    assert(irq_number >= SVCall_IRQn);
+#endif
+    active_priority = NVIC_GetPriority(irq_number);
 
     return active_priority;
 }

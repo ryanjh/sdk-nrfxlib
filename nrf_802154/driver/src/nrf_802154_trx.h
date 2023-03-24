@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 - 2022, Nordic Semiconductor ASA
+ * Copyright (c) 2019 - 2023, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -183,7 +183,6 @@ void nrf_802154_trx_cca_configuration_update(void);
  *
  * The frame will be received into buffer set by @ref nrf_802154_trx_receive_buffer_set.
  *
- * When NRF_802154_DISABLE_BCC_MATCHING == 0
  * - during receive @ref nrf_802154_trx_receive_frame_started handler is called when
  *   SHR field of a frame being received is received (only when @p notifications_mask contained @ref TRX_RECEIVE_NOTIFICATION_STARTED flag)
  * - during receive @ref nrf_802154_trx_receive_frame_bcmatched handler is called when
@@ -191,31 +190,21 @@ void nrf_802154_trx_cca_configuration_update(void);
  * - when a frame is received with correct crc, @ref nrf_802154_trx_receive_frame_received is called
  * - when a frame is received with incorrect crc, @ref nrf_802154_trx_receive_frame_crcerror is called
  *
- * When NRF_802154_DISABLE_BCC_MATCHING != 0
- * - @ref nrf_802154_trx_receive_frame_prestarted handler is called when the RADIO initially syncs on received frame.
- *   This handler is called when @p notifications_mask contains @ref TRX_RECEIVE_NOTIFICATION_PRESTARTED.
- * - @ref nrf_802154_trx_receive_frame_started handler is called when
- *   SHR field of a frame being received is received (only when @p notifications_mask contained @ref TRX_RECEIVE_NOTIFICATION_STARTED flag)
- * - after the frame is received with correct crc, @ref nrf_802154_trx_receive_frame_received is called
- * - after the frame is received with incorrect crc:
- *     - when NRF_802154_NOTIFY_CRCERROR == 0:
- *         - the hardware restarts receive automatically
- *         - no handler is called
- *     - when NRF_802154_NOTIFY_CRCERROR != 0:
- *         - the hardware restarts receive automatically
- *         - @ref nrf_802154_trx_receive_frame_crcerror is called
- *
  * When in @ref nrf_802154_trx_receive_frame_received, the TIMER is running allowing sending response (e.g. ACK frame)
  * in time regime by a call to nrf_802154_trx_transmit_after_frame_received.
  *
  * @note To receive ACK use @ref nrf_802154_trx_receive_ack
  *
  * @param[in] bcc   Number of received bytes after which @ref nrf_802154_trx_receive_frame_bcmatched will be called.
- *                  This must not be zero if @ref NRF_802154_DISABLE_BCC_MATCHING == 0.
- *                  When @ref NRF_802154_DISABLE_BCC_MATCHING != 0, this value must be zero.
+ * @param[in] rampup_trigg_mode  Radio ramp up triggering mode to be used.
+ *                  If @ref TRX_RAMP_UP_SW_TRIGGER is selected, this function will trigger radio ramp up in a software manner
+ *                  and the caller is guaranteed that ramp up is ongoing when the function ends.
+ *                  If @ref TRX_RAMP_UP_HW_TRIGGER is selected, this function will prepare the operation but it will end
+ *                  without starting radio ramp up. In this case, it is assumed that the trigger will be generated
+ *                  on the (D)PPI channel specified by @ref nrf_802154_trx_ramp_up_ppi_channel_get. It is the user's
+ *                  responsibility to prepare the stimulation of this (D)PPI.
  * @param[in] notifications_mask Selects additional notifications generated during a frame reception.
  *                  It is bitwise combination of @ref nrf_802154_trx_receive_notifications_t values.
- *                  When NRF_802154_DISABLE_BCC_MATCHING != 0, flag @ref TRX_RECEIVE_NOTIFICATION_PRESTARTED is forbidden.
  * @param[in] p_ack_tx_power Selects the power which should be used to transmitted an ACK if required.
  */
 void nrf_802154_trx_receive_frame(uint8_t                                 bcc,
@@ -321,8 +310,6 @@ bool nrf_802154_trx_receive_buffer_set(void * p_receive_buffer);
  * - The RADIO starts ramp up in transmit mode.
  * - The RADIO starts sending synchronization header (SHR).
  * - @ref nrf_802154_trx_transmit_frame_started handler is called from an ISR just after SHR is sent
- *   (only when @ref NRF_802154_TX_STARTED_NOTIFY_ENABLED == 1).
- * - @ref nrf_802154_trx_transmit_frame_transmitted handler is called from an ISR after full frame is sent on air.
  *
  * When cca==true:
  * - The radio starts ramp up in receive mode, then it starts cca procedure.
@@ -335,8 +322,6 @@ bool nrf_802154_trx_receive_buffer_set(void * p_receive_buffer);
  *     - If @ref TRX_TRANSMIT_NOTIFICATION_CCAIDLE was present in notifications_mask,
  *       the @ref nrf_802154_trx_transmit_frame_ccaidle is called.
  *     - @ref nrf_802154_trx_transmit_frame_started handler is called from an ISR just after SHR is sent
- *       (only when @ref NRF_802154_TX_STARTED_NOTIFY_ENABLED == 1).
- *     - @ref nrf_802154_trx_transmit_frame_transmitted handler is called from an ISR after full frame is sent on air.
  * - If cca failed (channel was busy):
  *     - The RADIO disables receive mode
  *     - @ref nrf_802154_trx_transmit_frame_ccabusy from an ISR handler is called
@@ -346,6 +331,16 @@ bool nrf_802154_trx_receive_buffer_set(void * p_receive_buffer);
  *                           bytes following p_transmit_buffer[0] to send.
  *                           The number of bytes pointed by p_transmit buffer must
  *                           be at least 1 and not less than p_transmit_buffer[0] + 1.
+ * @param rampup_trigg_mode  Radio ramp up triggering mode to be used.
+ *                           If @ref TRX_RAMP_UP_SW_TRIGGER is selected, this function
+ *                           will trigger radio ramp up in a software manner.
+ *                           If @ref TRX_RAMP_UP_HW_TRIGGER is selected, this function
+ *                           will prepare the operation but it will end without starting
+ *                           radio ramp up. In this case, it is assumed that the trigger
+ *                           will be generated on the (D)PPI channel specified by
+ *                           @ref nrf_802154_trx_ramp_up_ppi_channel_get.
+ *                           It is the user's responsibility to prepare the stimulation
+ *                           of this (D)PPI.
  * @param cca                Selects if CCA procedure should be performed prior to
  *                           real transmission. If false no cca will be performed.
  *                           If true, cca will be performed.
@@ -370,8 +365,7 @@ void nrf_802154_trx_transmit_frame(const void                            * p_tra
  * @param[in] delay_us              Delay (in microseconds)
  *
  * @retval true     If the function was called in time and ACK frame is scheduled for transmission.
- *                  When transmission starts and @ref NRF_802154_TX_STARTED_NOTIFY_ENABLED != 0
- *                  the function @ref nrf_802154_trx_transmit_ack_started will be called.
+ *                  When transmission starts the function @ref nrf_802154_trx_transmit_ack_started will be called.
  *                  When transmission is finished the function @ref nrf_802154_trx_transmit_ack_transmitted
  *                  will be called.
  * @retval false    If the function was called too late and given delay_us time gap
@@ -552,7 +546,6 @@ extern void nrf_802154_trx_receive_frame_received(void);
  * - receive operation has been started with a call to @ref nrf_802154_trx_receive_frame
  * - the RADIO received a frame on air with incorrect crc
  *
- * If NRF_802154_DISABLE_BCC_MATCHING == 0:
  * When this handler is called following holds:
  * - the RADIO peripheral started ramping down (or it ramped down already)
  * - trx module is in @c FINISHED state.
@@ -564,9 +557,6 @@ extern void nrf_802154_trx_receive_frame_received(void);
  * - @ref nrf_802154_trx_go_idle,
  * - @ref nrf_802154_trx_disable.
  *
- * If NRF_802154_DISABLE_BCC_MATCHING != 0:
- * - the RADIO peripheral is restarted automatically (by hardware) in receive mode
- * - trx module stays in @c RXFRAME state
  * Implementation of @ref nrf_802154_trx_receive_frame_crcerror should not call
  * @ref nrf_802154_trx_receive_frame as receive is restarted automatically by the hardware.
  * If the implementation wishes to change state it should call
@@ -663,7 +653,6 @@ extern void nrf_802154_trx_transmit_frame_ccabusy(void);
 /**@brief Handler called when frame transmission has just started.
  *
  * This handler is called from an ISR when:
- * - @ref NRF_802154_TX_STARTED_NOTIFY_ENABLED == 1 (see nrf_802154_config.h)
  * - transmit operation was started by a call to @ref nrf_802154_trx_transmit_frame.
  * - the RADIO peripheral sent synchronization header
  *
@@ -697,7 +686,6 @@ extern void nrf_802154_trx_transmit_frame_transmitted(void);
 /**@brief Handler called when ack transmission has just been started.
  *
  * This handler is called from an ISR when:
- * - @ref NRF_802154_TX_STARTED_NOTIFY_ENABLED == 1 (see nrf_802154_config.h)
  * - transmit operation was started by a call to @ref nrf_802154_trx_transmit_ack.
  * - the RADIO peripheral sent synchronization header
  *

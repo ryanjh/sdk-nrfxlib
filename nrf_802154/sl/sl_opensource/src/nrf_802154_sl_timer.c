@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022, Nordic Semiconductor ASA
+ * Copyright (c) 2020 - 2023, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -68,9 +68,7 @@ void nrf_802154_timer_coord_stop(void)
 
 void nrf_802154_sl_timer_module_init(void)
 {
-#if !defined(HALTIUM_XXAA) && !defined(MOONLIGHT_XXAA)
     BUILD_ASSERT(CONFIG_SYS_CLOCK_TICKS_PER_SEC == NRF_802154_SL_RTC_FREQUENCY);
-#endif
 }
 
 void nrf_802154_sl_timer_module_uninit(void)

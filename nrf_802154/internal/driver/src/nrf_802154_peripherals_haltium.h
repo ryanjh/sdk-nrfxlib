@@ -1,0 +1,6 @@
+#ifndef NRF_802154_PERIPHERALS_HALTIUM_H__
+#define NRF_802154_PERIPHERALS_HALTIUM_H__
+
+#include <nrf_802154_peripherals_nrf54h.h>
+
+#endif // NRF_802154_PERIPHERALS_HALTIUM_H__

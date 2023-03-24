@@ -1,0 +1,25 @@
+#
+# Copyright (c) 2023, Nordic Semiconductor ASA. All Rights Reserved.
+#
+# The information contained herein is confidential property of Nordic Semiconductor ASA.
+# The use, copying, transfer or disclosure of such information is prohibited except by
+# express written agreement with Nordic Semiconductor ASA.
+#
+
+if NRF_802154_SL
+
+config NRF_802154_SL_LPTIMER_GRTC
+	def_bool y
+	depends on SOC_PLATFORM_HALTIUM || SOC_PLATFORM_NRF54L
+
+config NRF_802154_SL_LPTIMER_EVENTS_HALTIUM
+	def_bool y
+	depends on NRF_802154_SL_LPTIMER_GRTC
+	depends on SOC_PLATFORM_HALTIUM
+
+config NRF_802154_SL_LPTIMER_EVENTS_NRF54L
+	def_bool y
+	depends on NRF_802154_SL_LPTIMER_GRTC
+	depends on SOC_PLATFORM_NRF54L
+
+endif # NRF_802154_SL

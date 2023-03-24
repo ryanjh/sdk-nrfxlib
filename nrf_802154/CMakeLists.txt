@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2021 - 2022, Nordic Semiconductor ASA
+# Copyright (c) 2021 - 2023, Nordic Semiconductor ASA
 # All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
@@ -39,3 +39,7 @@ add_subdirectory(driver)
 add_subdirectory(sl)
 
 add_subdirectory(serialization)
+
+if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/internal/CMakeLists.txt)
+  add_subdirectory(internal)
+endif ()

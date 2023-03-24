@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 - 2022, Nordic Semiconductor ASA
+ * Copyright (c) 2018 - 2023, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -164,7 +164,7 @@ typedef void (* rsch_dly_ts_started_callback_t)(rsch_dly_ts_id_t dly_ts_id);
 typedef struct
 {
     uint64_t                       trigger_time;     ///< Trigger time of the timeslot start, in microseconds.
-    uint8_t                        ppi_trigger_en;   ///< Enable the (D)PPI triggering after the start of the timeslot.
+    bool                           ppi_trigger_en;   ///< Enable the (D)PPI triggering after the start of the timeslot.
     uint32_t                       ppi_trigger_dly;  ///< Time delta between @p trigger_time and the moment of (D)PPI triggering.
     rsch_prio_t                    prio;             ///< Priority level required for the delayed timeslot.
     rsch_dly_ts_op_t               op;               ///< Operation to be performed in the requested timeslot.

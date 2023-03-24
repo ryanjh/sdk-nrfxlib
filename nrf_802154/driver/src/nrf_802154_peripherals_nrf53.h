@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 - 2022, Nordic Semiconductor ASA
+ * Copyright (c) 2019 - 2023, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -83,25 +83,6 @@ extern "C" {
     NRFX_CONCAT_3(EGU, NRF_802154_EGU_INSTANCE_NO, _IRQHandler)
 
 /**
- * @def NRF_802154_EGU_IRQN
- *
- * The SWI EGU IRQ number used by the driver for requests and notifications if SWI is in use.
- *
- * @note This option is used when the driver uses SWI to process requests and notifications.
- *
- */
-#define NRF_802154_EGU_IRQN \
-    NRFX_CONCAT_3(EGU, NRF_802154_EGU_INSTANCE_NO, _IRQn)
-
-/**
- * @def NRF_802154_DPPIC_INSTANCE
- *
- * The DPPIC instance used by the driver to connect peripherals to radio.
- *
- */
-#define NRF_802154_DPPIC_INSTANCE    NRF_DPPIC
-
-/**
  * @def NRF_802154_EGU_RAMP_UP_EVENT
  *
  * The EGU event used by the driver to trigger radio ramp-up.
@@ -135,6 +116,14 @@ extern "C" {
 #endif
 
 /**
+ * @def NRF_802154_DPPIC_INSTANCE
+ *
+ * The DPPIC instance used by the driver to connect peripherals to radio.
+ *
+ */
+#define NRF_802154_DPPIC_INSTANCE NRF_DPPIC
+
+/**
  * @def NRF_802154_DPPI_RADIO_DISABLED
  *
  * The DPPI channel that publishes RADIO_DISABLED event.
@@ -147,15 +136,15 @@ extern "C" {
 #endif
 
 /**
- * @def NRF_802154_DPPI_RADIO_TXREADY
+ * @def NRF_802154_DPPI_RADIO_READY
  *
- * The DPPI channel that publishes RADIO_TXREADY event.
+ * The DPPI channel that publishes RADIO_READY event.
  *
  * @note This option is used by the core module regardless of the driver configuration.
  *
  */
-#ifndef NRF_802154_DPPI_RADIO_TXREADY
-#define NRF_802154_DPPI_RADIO_TXREADY 4U
+#ifndef NRF_802154_DPPI_RADIO_READY
+#define NRF_802154_DPPI_RADIO_READY 4U
 #endif
 
 /**
@@ -291,7 +280,7 @@ extern "C" {
 #ifndef NRF_802154_DPPI_CHANNELS_USED_MASK
 #define NRF_802154_DPPI_CHANNELS_USED_MASK (                   \
         (1UL << NRF_802154_DPPI_RADIO_DISABLED) |              \
-        (1UL << NRF_802154_DPPI_RADIO_TXREADY) |               \
+        (1UL << NRF_802154_DPPI_RADIO_READY) |                 \
         (1UL << NRF_802154_DPPI_RADIO_ADDRESS) |               \
         (1UL << NRF_802154_DPPI_RADIO_END) |                   \
         (1UL << NRF_802154_DPPI_RADIO_PHYEND) |                \

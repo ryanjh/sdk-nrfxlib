@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022, Nordic Semiconductor ASA
+ * Copyright (c) 2020 - 2023, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -829,6 +829,13 @@ uint64_t nrf_802154_time_get(void);
  * @param[in] frame_counter Global MAC Frame Counter to set.
  */
 void nrf_802154_security_global_frame_counter_set(uint32_t frame_counter);
+
+/**
+ * @brief Sets nRF 802.15.4 Radio Driver MAC Global Frame Counter if the value passed is larger than current.
+ *
+ * @param[in] frame_counter Frame counter to set.
+ */
+void nrf_802154_security_global_frame_counter_set_if_larger(uint32_t frame_counter);
 
 /**
  * @brief Store the 802.15.4 MAC Security Key inside the nRF 802.15.4 Radio Driver.
