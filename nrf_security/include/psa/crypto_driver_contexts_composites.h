@@ -44,6 +44,8 @@
 #include "cc3xx_crypto_primitives.h"
 #elif defined(PSA_CRYPTO_DRIVER_OBERON)
 #include "oberon_crypto_primitives.h"
+#elif defined(PSA_CRYPTO_DRIVER_CRACEN)
+#include "cracen_psa_primitives.h"
 #endif
 
 
@@ -67,6 +69,9 @@ typedef union {
 #if defined(PSA_CRYPTO_DRIVER_CC3XX)
     cc3xx_mac_operation_t cc3xx_driver_ctx;
 #endif
+#if defined(PSA_CRYPTO_DRIVER_CRACEN)
+    cracen_mac_operation_t cracen_driver_ctx;
+#endif
 // TODO: Oberon doesn't provide mac APIs yet
 //#if defined(PSA_CRYPTO_DRIVER_OBERON)
 //    oberon_mac_operation_t oberon_driver_ctx;
@@ -85,6 +90,9 @@ typedef union {
 #if defined(PSA_CRYPTO_DRIVER_OBERON)
     oberon_aead_operation_t oberon_driver_ctx;
 #endif /* PSA_CRYPTO_DRIVER_OBERON */
+#if defined(PSA_CRYPTO_DRIVER_CRACEN)
+    cracen_aead_operation_t cracen_driver_ctx;
+#endif /* PSA_CRYPTO_DRIVER_CRACEN */
 
 } psa_driver_aead_context_t;
 

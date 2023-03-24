@@ -45,7 +45,9 @@
 #if defined(PSA_CRYPTO_DRIVER_OBERON)
 #include "oberon.h"
 #endif
-
+#if defined(PSA_CRYPTO_DRIVER_CRACEN)
+#include "cracen_psa.h"
+#endif
 
 /* Include the context structure definitions for the Mbed TLS software drivers */
 #include "psa/crypto_builtin_primitives.h"
@@ -69,6 +71,9 @@ typedef union {
 #if defined(PSA_CRYPTO_DRIVER_OBERON)
     oberon_hash_operation_t oberon_driver_ctx;
 #endif
+#if defined(PSA_CRYPTO_DRIVER_CRACEN)
+    cracen_hash_operation_t cracen_driver_ctx;
+#endif
 } psa_driver_hash_context_t;
 
 typedef union {
@@ -84,7 +89,9 @@ typedef union {
 #if defined(PSA_CRYPTO_DRIVER_OBERON)
     oberon_cipher_operation_t oberon_driver_ctx;
 #endif /* PSA_CRYPTO_DRIVER_CC3XX */
-
+#if defined(PSA_CRYPTO_DRIVER_CRACEN)
+    cracen_cipher_operation_t cracen_driver_ctx;
+#endif
 } psa_driver_cipher_context_t;
 
 #endif /* PSA_CRYPTO_DRIVER_CONTEXTS_PRIMITIVES_H */
