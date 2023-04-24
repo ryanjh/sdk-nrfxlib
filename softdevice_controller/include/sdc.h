@@ -115,8 +115,8 @@ extern "C" {
  */
 
 /** @brief Auxiliary defines, not to be used outside of this file. */
-#define __MEM_MINIMAL_CENTRAL_LINK_SIZE 1156
-#define __MEM_MINIMAL_PERIPHERAL_LINK_SIZE 1300
+#define __MEM_MINIMAL_CENTRAL_LINK_SIZE 1125
+#define __MEM_MINIMAL_PERIPHERAL_LINK_SIZE 1269
 #define __MEM_TX_BUFFER_OVERHEAD_SIZE 16
 #define __MEM_RX_BUFFER_OVERHEAD_SIZE 14
 
@@ -149,22 +149,22 @@ extern "C" {
      __MEM_ADDITIONAL_LINK_SIZE(tx_size, rx_size, tx_count, rx_count))
 
 /** Maximum shared memory required for central links. */
-#define SDC_MEM_CENTRAL_LINKS_SHARED 24
+#define SDC_MEM_CENTRAL_LINKS_SHARED 29
 
 /** Maximum shared memory required for peripheral links. */
-#define SDC_MEM_PERIPHERAL_LINKS_SHARED  24
+#define SDC_MEM_PERIPHERAL_LINKS_SHARED  29
 
 /** Memory required for scanner buffers when only supporting legacy scanning. */
-#define SDC_MEM_SCAN_BUFFER(buffer_count) (72 + (buffer_count) * 90)
+#define SDC_MEM_SCAN_BUFFER(buffer_count) (56 + (buffer_count) * 88)
 
 /** Memory required for scanner buffers when supporting extended scanning. */
-#define SDC_MEM_SCAN_BUFFER_EXT(buffer_count) (42 + (buffer_count) * 307)
+#define SDC_MEM_SCAN_BUFFER_EXT(buffer_count) (24 + (buffer_count) * 306)
 
 /** @brief Auxiliary defines, not to be used outside of this file. */
-#define __MEM_PER_ADV_SET_LOW(max_adv_data) ((5069+(max_adv_data)*18)/10)
-#define __MEM_PER_ADV_SET_HIGH(max_adv_data) (694+(max_adv_data))
-#define __MEM_PER_PERIODIC_ADV_SET_LOW(max_adv_data) ((2578+(max_adv_data)*18)/10)
-#define __MEM_PER_PERIODIC_ADV_SET_HIGH(max_adv_data) (449+(max_adv_data))
+#define __MEM_PER_ADV_SET_LOW(max_adv_data) ((4829+(max_adv_data)*18)/10)
+#define __MEM_PER_ADV_SET_HIGH(max_adv_data) (670+(max_adv_data))
+#define __MEM_PER_PERIODIC_ADV_SET_LOW(max_adv_data) ((2658+(max_adv_data)*18)/10)
+#define __MEM_PER_PERIODIC_ADV_SET_HIGH(max_adv_data) (457+(max_adv_data))
 
 /** @brief Maximum required memory for a given advertising buffer size.
  *
@@ -188,7 +188,7 @@ extern "C" {
  *
  * @param[in] buffer_count The number of periodic synchronization receive buffers.
  */
-#define SDC_MEM_PER_PERIODIC_SYNC(buffer_count) (247 + (buffer_count) * 285)
+#define SDC_MEM_PER_PERIODIC_SYNC(buffer_count) (216 + (buffer_count) * 284)
 
 /** Memory required per periodic sync when periodic sync with responses is supported.
  *
@@ -196,7 +196,7 @@ extern "C" {
  * @param[in] rx_buffer_count The number of buffers for receiving data.
  */
 #define SDC_MEM_PER_PERIODIC_SYNC_RSP(tx_buffer_count, rx_buffer_count) \
-    (630 + (tx_buffer_count - 1) * 257 + (rx_buffer_count) * 285)
+    (644 + (tx_buffer_count - 1) * 257 + (rx_buffer_count) * 284)
 
 /** Memory required for the periodic adv list.
  *
@@ -207,20 +207,23 @@ extern "C" {
 /** @brief Auxiliary defines, not to be used outside of this file */
 #define __MEM_PER_PERIODIC_ADV_RSP_TX_BUFFER(max_tx_data_size) ((max_tx_data_size) + 9)
 #define __MEM_PER_PERIODIC_ADV_RSP_RX_BUFFER (282)
-#define __MEM_MINIMAL_PERIODIC_ADV_RSP_SET_SIZE_WITH_RX (716)
-#define __MEM_MINIMAL_PERIODIC_ADV_RSP_SET_SIZE_WITHOUT_RX (408)
+#define __MEM_MINIMAL_PERIODIC_ADV_RSP_SET_SIZE_WITH_RX (719)
+#define __MEM_MINIMAL_PERIODIC_ADV_RSP_SET_SIZE_WITHOUT_RX (412)
+#define __MEM_FOR_PERIODIC_ADV_RSP_FAILURE_REPORTING (224)
 
 /** Memory required per periodic advertising with responses set.
  *
  * @param[in] tx_buffer_count The number of buffers for sending data. Minimum of 1.
  * @param[in] rx_buffer_count The number of buffers for receiving data.
  * @param[in] max_tx_data_size The maximum size of data which can be sent.
+ * @param[in] failure_reporting_enabled Whether failure reporting is enabled.
  */
-#define SDC_MEM_PER_PERIODIC_ADV_RSP_SET(tx_buffer_count, rx_buffer_count, max_tx_data_size) \
+#define SDC_MEM_PER_PERIODIC_ADV_RSP_SET(tx_buffer_count, rx_buffer_count, max_tx_data_size, failure_reporting_enabled) \
      (((rx_buffer_count) > 0 ? __MEM_MINIMAL_PERIODIC_ADV_RSP_SET_SIZE_WITH_RX : \
                              __MEM_MINIMAL_PERIODIC_ADV_RSP_SET_SIZE_WITHOUT_RX ) \
      + (tx_buffer_count) * __MEM_PER_PERIODIC_ADV_RSP_TX_BUFFER(max_tx_data_size) \
-     + (rx_buffer_count) * __MEM_PER_PERIODIC_ADV_RSP_RX_BUFFER)
+     + (rx_buffer_count) * __MEM_PER_PERIODIC_ADV_RSP_RX_BUFFER \
+     + ((failure_reporting_enabled) ? __MEM_FOR_PERIODIC_ADV_RSP_FAILURE_REPORTING : 0))
 
 /** @} end of sdc_mem_defines */
 
@@ -273,6 +276,8 @@ enum sdc_cfg_type
     SDC_CFG_TYPE_PERIODIC_ADV_RSP_COUNT,
     /** See @ref sdc_cfg_t::periodic_adv_rsp_buffer_cfg. */
     SDC_CFG_TYPE_PERIODIC_ADV_RSP_BUFFER_CFG,
+    /** See @ref sdc_cfg_t::periodic_adv_rsp_failure_reporting_cfg. */
+    SDC_CFG_TYPE_PERIODIC_ADV_RSP_FAILURE_REPORTING_CFG,
     /** See @ref sdc_cfg_t::periodic_sync_rsp_tx_buffer_cfg. */
     SDC_CFG_TYPE_PERIODIC_SYNC_RSP_TX_BUFFER_CFG,
 };
@@ -430,6 +435,13 @@ typedef union
      *  Default: See @ref sdc_cfg_periodic_adv_rsp_buffer_cfg_t.
      */
     sdc_cfg_periodic_adv_rsp_buffer_cfg_t periodic_adv_rsp_buffer_cfg;
+    /** Enables/disables failure response reports for Periodic Advertising with Responses - Advertiser.
+     *
+     * Set to 1 to enable RX failure reporting, 0 to disable.
+     *
+     * Default: disabled.
+     */
+    uint8_t periodic_adv_rsp_failure_reporting_cfg;
     /** Configures the maximum number of responses that can be stored in the controller
      *  when synchronized to a periodic advertiser with responses.
      *
