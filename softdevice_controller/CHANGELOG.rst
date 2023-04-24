@@ -12,32 +12,47 @@ All the notable changes to this project are documented on this page.
 Main branch
 ***********
 
-All the notable changes included in the main branch are documented in this section.
+Added
+=====
+
+* Support for LE Read and Write RF Path Compensation HCI commands (DRGN-10234 and DRGN-18202).
+
+ Changes
+ =======
+
+* Receiving a Periodic Advertisement Sync Transfer (PAST) with invalid parameters will now generate the ``LE Periodic Advertising Sync Transfer Received`` event when receiving PAST is enabled (
+DRGN-18803).
+
+ Bug fixes
+ =========
+
+* Fixed an issue where the Periodic Advertisement Sync Transfer (PAST) sender could assert if the associated periodic sync was not fully established (DRGN-18833).
+* Fixed an issue where the controller would not deliver advertising reports for advertisements received when the scanner was close to timing out (DRGN-18651).
+* Fixed lower TX power on the nRF21540 DK in connected state.
+  This occurred when using MPSL FEM and manually configuring the radio power (DRGN-18971).
+
+nRF Connect SDK v2.2.99-cs1
+***************************
+
+All the notable changes included in the |NCS| v2.2.99-cs1 release are documented in this section.
 
 Added
 =====
 
+* Experimental support for the nRF54 Series.
 * Support for the vendor-specific HCI command: Set Compatibility mode for window offset (DRGN-18727).
 * Support for Periodic Advertising with Responses (PAwR) Scanner (experimental) (DRGN-18739).
-* Support for LE Read and Write RF Path Compensation HCI commands (DRGN-10234 and DRGN-18202).
 
 Changes
 =======
 
 * The ``VersNr`` field in the ``LL_VERSION_IND`` packet now contains the value 0x0D to indicate compatibility with Bluetooth Core Specification v5.4 (DRGN-18624).
-* Receiving a Periodic Advertisement Sync Transfer (PAST) with invalid parameters will now generate the ``LE Periodic Advertising Sync Transfer Received`` event when receiving PAST is enabled (DRGN-18803).
 
 Bug fixes
 =========
 
 * Fixed a rare issue where the controller could assert when starting a connectable advertiser or creating a connection too quickly after disconnection (DRGN-18714).
 * Fixed an issue where the Periodic Advertisement Sync Transfer (PAST) sender may generate an incorrect ``SyncInfo`` field for periodic advertising intervals greater than 5 seconds (DRGN-18775).
-* Fixed an issue where the Periodic Advertisement Sync Transfer (PAST) sender could assert if the associated periodic sync was not fully established (DRGN-18833).
-* Fixed an issue where the controller would not deliver advertising reports for advertisements received when the scanner was close to timing out (DRGN-18651).
-* Fixed lower TX power on the nRF21540 DK in connected state.
-  This occurred when using MPSL FEM and manually configuring the radio power (DRGN-18971).
-* Fixed an issue where the controller cannot synchronize to a periodic advertising train using the Periodic Advertising Sync Transfer procedure if it has previously tried to do it while it was already synchronized to the periodic advertising train (DRGN-19003).
-* Fixed an issue where the peripheral would disconnect with DIFFERENT_TRANSACTION_COLLISION when a collision of connection update and phy update occurs even when central asks for no change. (DRGN-18840).
 
 nRF Connect SDK v2.3.0
 **********************

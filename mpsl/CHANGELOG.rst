@@ -9,17 +9,24 @@ Changelog
 
 Main branch
 ***********
+
 All the notable changes included in the main branch are documented in this section.
+
+Added
+=====
+
+* Function for getting configuration of simple GPIO front-end module :c:func:`mpsl_fem_simple_gpio_interface_config_get`.
+
+nRF Connect SDK v2.2.99-cs1
+***************************
+
+All the notable changes included in the |NCS| v2.2.99-cs1 release are documented in this section.
 
 Changes
 =======
 
 * Removed deprecated API for specifying the FEM pin configuration type associated with :c:macro:`MPSL_FEM_PIN_CFG_TYPE_PIN_PORT`.
   Only the :c:struct:`mpsl_fem_pin_t` configuration is supported as a FEM pin configuration now (KRKNWK-16496).
-
-Added
-=====
-* Function for getting configuration of simple GPIO front-end module :c:func:`mpsl_fem_simple_gpio_interface_config_get`.
 
 nRF Connect SDK v2.3.0
 **********************
