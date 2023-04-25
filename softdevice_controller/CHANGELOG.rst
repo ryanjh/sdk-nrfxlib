@@ -17,14 +17,13 @@ Added
 
 * Support for LE Read and Write RF Path Compensation HCI commands (DRGN-10234 and DRGN-18202).
 
- Changes
- =======
+Changes
+=======
 
-* Receiving a Periodic Advertisement Sync Transfer (PAST) with invalid parameters will now generate the ``LE Periodic Advertising Sync Transfer Received`` event when receiving PAST is enabled (
-DRGN-18803).
+* Receiving a Periodic Advertisement Sync Transfer (PAST) with invalid parameters will now generate the ``LE Periodic Advertising Sync Transfer Received`` event when receiving PAST is enabled (DRGN-18803).
 
- Bug fixes
- =========
+Bug fixes
+=========
 
 * Fixed an issue where the Periodic Advertisement Sync Transfer (PAST) sender could assert if the associated periodic sync was not fully established (DRGN-18833).
 * Fixed an issue where the controller would not deliver advertising reports for advertisements received when the scanner was close to timing out (DRGN-18651).
