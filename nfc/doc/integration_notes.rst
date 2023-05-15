@@ -49,6 +49,15 @@ nfc_platform_nfcid1_default_bytes_get()
   This function is used to fetch default bytes for NFCID1 that are stored in FICR registers.
   Access to FICR registers differs between Secure and Non-Secure Processing Environments.
 
+nfc_platform_buffer_alloc()
+  This function is called every time when the NFC libraries prepare for transmission or reception.
+  A buffer must be allocated in the memory region accessible for EasyDMA peripheral utility.
+  This buffer is accessed directly by the NFCT peripheral.
+
+nfc_platform_buffer_free()
+  This function is called when the NFC libraries no longer need a buffer for the NFCT peripheral.
+  The buffer must be freed inside this function.
+
 nfc_platform_event_handler()
   This event handler is called by the NFC libraries to forward NFC events received from the NFCT driver.
   It is necessary to track this event flow in order to determine when HFCLK must be running and when it can be stopped.
