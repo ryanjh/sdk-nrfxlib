@@ -11,8 +11,9 @@ menuconfig NEMA
 
 if NEMA
 
-module = nemagfx
-module-str = nemagfx
+module = NEMA
+module-str = nema
+source "subsys/logging/Kconfig.template.log_config"
 
 choice NEMA_SOURCE
 	prompt "Nema origin"
@@ -27,27 +28,27 @@ endchoice # NEMA_SOURCE
 
 choice NEMA_PLATFORM_CHOICE
 	prompt "Nema platform"
-	default NEMA_PLATFORM_NATIVE_POSIX if BOARD_NATIVE_POSIX
-	default NEMA_PLATFORM_NRF7140 if BOARD_NRF7140DK_NRF7140_CPUAPP
+	default NEMA_PLATFORM_ZEPHYR_POSIX if BOARD_NATIVE_POSIX
+	default NEMA_PLATFORM_ZEPHYR_NRF if BOARD_NRF7140DK_NRF7140_CPUAPP
 
-config NEMA_PLATFORM_NATIVE_POSIX
+config NEMA_PLATFORM_ZEPHYR_POSIX
 	bool "Native POSIX platform with SDL"
 	depends on BOARD_NATIVE_POSIX
 	select HAS_SDL
 	help
 	  Native POSIX Nema platform.
 
-config NEMA_PLATFORM_NRF7140
-	bool "nRF7140 SoC"
+config NEMA_PLATFORM_ZEPHYR_NRF
+	bool "nRF SoC"
 	help
-	  nRF7140 SoC with integrated GPU and display controller.
+	  nRF SoCs with integrated GPU and display controller.
 
 endchoice
 
 config NEMA_PLATFORM
 	string
-	default "native_posix" if NEMA_PLATFORM_NATIVE_POSIX
-	default "nrf7140" if NEMA_PLATFORM_NRF7140
+	default "zephyr_posix" if NEMA_PLATFORM_ZEPHYR_POSIX
+	default "zephyr_nrf" if NEMA_PLATFORM_ZEPHYR_NRF
 	help
 	  String name of the target platform.
 
@@ -65,7 +66,7 @@ config NEMADC_ENABLE
 
 config NEMAVG_ENABLE
 	bool "Nema Vector Graphics library"
-	depends on NEMA_PLATFORM_NRF7140
+	depends on NEMA_PLATFORM_ZEPHYR_NRF
 	help
 	  Enable Nema Vector Graphics library.
 

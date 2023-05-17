@@ -29,4 +29,8 @@
 #define TLS_VAR
 #endif
 
+#ifndef NEMA_CONFIG_MULTI_MEM_POOLS_CNT
+#define NEMA_CONFIG_MULTI_MEM_POOLS_CNT 1
+#endif
+
 #endif
