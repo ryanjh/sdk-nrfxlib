@@ -4,9 +4,12 @@
 # SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
 #
 
-zephyr_interface_library_named (SOFTDEVICE_CONTROLLER_LIB_HEADERS)
-target_include_directories(SOFTDEVICE_CONTROLLER_LIB_HEADERS
-  INTERFACE include)
+if (CONFIG_BT_LL_SOFTDEVICE_HEADERS_INCLUDE)
+  zephyr_interface_library_named (SOFTDEVICE_CONTROLLER_LIB_HEADERS)
+  target_include_directories(SOFTDEVICE_CONTROLLER_LIB_HEADERS
+    INTERFACE include)
+  zephyr_link_libraries(INTERFACE SOFTDEVICE_CONTROLLER_LIB_HEADERS)
+endif()
 
 if(CONFIG_BT_LL_SOFTDEVICE AND CONFIG_BT_LL_SOFTDEVICE_BUILD_TYPE_LIB)
   if(CONFIG_FPGA_TIMING_COMPATIBILITY)
@@ -44,5 +47,4 @@ if(CONFIG_BT_LL_SOFTDEVICE AND CONFIG_BT_LL_SOFTDEVICE_BUILD_TYPE_LIB)
   set(SOFTDEVICE_CONTROLLER_LIB
     ${SOFTDEVICE_CONTROLLER_LIB_DIR}/libsoftdevice_controller_${softdevice_controller_variant}.a)
   zephyr_link_libraries(${SOFTDEVICE_CONTROLLER_LIB})
-
 endif()
