@@ -26,6 +26,9 @@ Modified
 
 * The :c:func:`nfc_platform_setup()` function now provides a pointer to the callback resolution function that is used to execute the user-defined NFC callback.
 * The :c:func:`nfc_t2t_setup()` function was updated to allow coexistence of the Type 2 Tag and the Type 4 Tag libraries.
+* The :c:func:`nfc_platform_setup()` function now provides a pointer to the interrupt priority for the NFCT peripheral.
+  Its value must be set to the requested one.
+  In implementations where the operating system is responsible for setting the interrupt priority, this value is not relevant.
 
 nRF Connect SDK v2.1.0
 **********************

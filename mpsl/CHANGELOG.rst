@@ -9,7 +9,13 @@ Changelog
 
 Main branch
 ***********
+
 All the notable changes included in the main branch are documented in this section.
+
+nRF Connect SDK v2.2.99-cs1
+***************************
+
+All the notable changes included in the |NCS| v2.2.99-cs1 release are documented in this section.
 
 Changes
 =======

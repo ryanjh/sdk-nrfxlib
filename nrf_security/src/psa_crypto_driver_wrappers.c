@@ -57,17 +57,15 @@
 #include "oberon.h"
 #endif /* PSA_CRYPTO_DRIVER_OBERON */
 
-/* Include TF-M builtin key driver */
-#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+#if defined(PSA_CRYPTO_DRIVER_CRACEN)
 #ifndef PSA_CRYPTO_DRIVER_PRESENT
 #define PSA_CRYPTO_DRIVER_PRESENT
 #endif
 #ifndef PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT
 #define PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT
 #endif
-#include "tfm_crypto_defs.h"
-#include "tfm_builtin_key_loader.h"
-#endif /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
+#include "cracen_psa.h"
+#endif /* PSA_CRYPTO_DRIVER_CRACEN */
 
 
 /* Repeat above block for each JSON-declared driver during autogeneration */
@@ -88,9 +86,9 @@
 #define PSA_CRYPTO_OBERON_DRIVER_ID (5)
 #endif /* PSA_CRYPTO_DRIVER_OBERON */
 
-#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
-#define PSA_CRYPTO_TFM_BUILTIN_KEY_LOADER_DRIVER_ID (6)
-#endif /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
+#if defined(PSA_CRYPTO_DRIVER_CRACEN)
+#define PSA_CRYPTO_CRACEN_DRIVER_ID (6)
+#endif /* PSA_CRYPTO_DRIVER_CRACEN */
 
 /* Support the 'old' SE interface when asked to */
 #if defined(MBEDTLS_PSA_CRYPTO_SE_C)
@@ -786,15 +784,13 @@ psa_status_t psa_driver_wrapper_import_key(
                return( status );
 #endif /* PSA_CRYPTO_DRIVER_HAS_ACCEL_KEY_TYPES_OBERON */
 #endif /* PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT */
-        /*
-         * Fall through, meaning no accelerator supports this operation.
-         * Oberon doesn't support importing symmetric keys at the moment
-         * so this is necessary for Oberon to work.
-         */
-        return( psa_import_key_into_slot( attributes,
-                                          data, data_length,
-                                          key_buffer, key_buffer_size,
-                                          key_buffer_length, bits ) );
+            /* Fell through, meaning no accelerator supports this operation.
+            * Keep in mind that Oberon doesn't support importing symmetric
+            * keys at the moment so this is necessary for Oberon */
+            return psa_import_key_into_slot( attributes,
+                                              data, data_length,
+                                              key_buffer, key_buffer_size,
+                                              key_buffer_length, bits );
         default:
             (void)status;
             return( PSA_ERROR_INVALID_ARGUMENT );
