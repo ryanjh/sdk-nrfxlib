@@ -17,11 +17,18 @@ Added
 
 * A callback requested by the :c:func:`nfc_platform_cb_request()` function to allow execution of platform-dependent code before executing the user callback.
 * A header file :file:`nfc_platform.h` for platform layer.
+* Added functions :c:func:`nfc_platform_buffer_alloc()` and :c:func:`nfc_platform_buffer_free` for the platform layer.
+  The NFCT buffer for data exchange is now outside the library implementation.
+  You have to define these two functions and return a memory that is accessible by the EasyDMA utility.
 
 Modified
 ========
 
 * The :c:func:`nfc_platform_setup()` function now provides a pointer to the callback resolution function that is used to execute the user-defined NFC callback.
+* The :c:func:`nfc_t2t_setup()` function was updated to allow coexistence of the Type 2 Tag and the Type 4 Tag libraries.
+* The :c:func:`nfc_platform_setup()` function now provides a pointer to the interrupt priority for the NFCT peripheral.
+  Its value must be set to the requested one.
+  In implementations where the operating system is responsible for setting the interrupt priority, this value is not relevant.
 
 nRF Connect SDK v2.1.0
 **********************
