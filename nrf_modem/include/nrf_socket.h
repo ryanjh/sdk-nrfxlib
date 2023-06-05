@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 	#ifdef __GNUC__
@@ -143,6 +144,11 @@ extern "C" {
  */
 
 /** @brief
+ * Maximum TLS message size in bytes.
+ */
+#define NRF_SOCKET_TLS_MAX_MESSAGE_SIZE 2048
+
+/** @brief
  * Write-only socket option to select the security tags to be used.
  * @sa nrf_sec_tag_t.
  */
@@ -228,6 +234,8 @@ extern "C" {
  *  Range is 0 to 135. 0 is no timeout and 135 is 2 h 15 min. Default is 0 (no timeout).
  */
 #define NRF_SO_TCP_SRV_SESSTIMEO 55
+/** Set a callback for poll events */
+#define NRF_SO_POLLCB 60
 
 /** Release Assistance Indication.
  *  Indicate that the application does not intend to send more data.
@@ -282,8 +290,8 @@ extern "C" {
 #define NRF_MSG_WAITALL 0x100
 /**@} */
 
-/**@defgroup nrf_fcnt_commands Descriptor manipulate API
- * @brief API used to manipulate the behaviour of IP sockets using nrf_fcntl().
+/**@defgroup nrf_fcnt_commands File descriptor control option commands.
+ * @brief API commands used to control the behaviour of IP sockets using nrf_fcntl().
  * @ingroup nrf_socket
  * @{
  */
@@ -291,7 +299,13 @@ extern "C" {
 #define NRF_F_GETFL 3
 /** Set flag. */
 #define NRF_F_SETFL 4
+/**@} */
 
+/**@defgroup nrf_fcnt_flags File descriptor control option flags.
+ * @brief Flags used to control the behaviour of IP sockets using nrf_fcntl().
+ * @ingroup nrf_socket
+ * @{
+ */
 /** Use non-blocking I/O. */
 #define NRF_O_NONBLOCK 0x01
 /**@} */
@@ -467,6 +481,26 @@ struct nrf_addrinfo {
 	struct nrf_addrinfo *ai_next;
 };
 
+/** @brief Interface address information. */
+struct nrf_ifaddrs {
+	/* Pointer to next struct */
+	struct nrf_ifaddrs *ifa_next;
+	/** Interface name. */
+	char *ifa_name;
+	/** Interface flags. */
+	uint32_t ifa_flags;
+	/** Interface address. */
+	struct nrf_sockaddr *ifa_addr;
+	/** Interface netmask. */
+	struct nrf_sockaddr *ifa_netmask;
+	/** Interface broadcast address. */
+	struct nrf_sockaddr *ifa_broadaddr;
+	/** Interface destination address. */
+	struct nrf_sockaddr *ifa_dstaddr;
+	/** Address specific data. */
+	void *ifa_data;
+};
+
 /**@} */
 
 /**@addtogroup nrf_socket_tls
@@ -541,7 +575,7 @@ struct nrf_ifreq {
  * POSIX.1-2017 article</a> for normative description.
  *
  * In addition, the function shall return -1 and set the following errno:
- * [NRF_ESHUTDOWN] Modem was shut down.
+ * - [NRF_ESHUTDOWN] Modem was shut down.
  */
 int nrf_socket(int family, int type, int protocol);
 
@@ -553,20 +587,21 @@ int nrf_socket(int family, int type, int protocol);
  * POSIX.1-2017 article</a> for normative description.
  *
  * In addition, the function shall return -1 and set the following errno:
- * [NRF_ESHUTDOWN] Modem was shut down.
+ * - [NRF_ESHUTDOWN] Modem was shut down.
  */
 int nrf_close(int fildes);
 
 /**
  * @brief Function for controlling file descriptor options.
  *
- * @details Set or get file descriptor options or flags. For a list of supported commands, refer
- *          to @ref nrf_fcnt_commands.
- *          For a list of supported flags, refer to nrf_fcnt_flags.
+ * @details
+ * Set or get file descriptor options or flags.
+ * For a list of supported commands, refer to @ref nrf_fcnt_commands.
+ * For a list of supported flags, refer to @ref nrf_fcnt_flags.
  *
- * @param[in] fd    The descriptor to set options on.
- * @param[in] cmd   The command class for options.
- * @param[in] flags The flags to set.
+ * @param fd    The descriptor to set options on.
+ * @param cmd   The command class for options.
+ * @param flags The flags to set.
  *
  * @return Value dependent on command class:
  *         NRF_F_GETFL - Value of file status flags.
@@ -583,7 +618,10 @@ int nrf_fcntl(int fd, int cmd, int flags);
  * POSIX.1-2017 article</a> for normative description.
  *
  * In addition, the function shall return -1 and set the following errno:
- * [NRF_ESHUTDOWN] Modem was shut down.
+ * - [NRF_ESHUTDOWN] Modem was shut down.
+ *
+ * In addition, an asynchronous connection attempt shall fail and set NRF_SO_ERROR if:
+ * - [NRF_EBUSY] Another TLS handshake was ongoing.
  */
 int nrf_connect(int socket, const struct nrf_sockaddr *address, nrf_socklen_t address_len);
 
@@ -595,8 +633,9 @@ int nrf_connect(int socket, const struct nrf_sockaddr *address, nrf_socklen_t ad
  * POSIX.1-2017 article</a> for normative description.
  *
  * In addition, the function shall return -1 and set the following errno:
- * [NRF_ESHUTDOWN] Modem was shut down.
- * [NRF_ECANCELED] Operation canceled because of APN rate control.
+ * - [NRF_ESHUTDOWN] Modem was shut down.
+ * - [NRF_ECANCELED] Operation canceled because of APN rate control.
+ * - [NRF_ENOMEM] TCP stream interrupted because of no heap memory.
  */
 ssize_t nrf_send(int socket, const void *buffer, size_t length, int flags);
 
@@ -608,8 +647,9 @@ ssize_t nrf_send(int socket, const void *buffer, size_t length, int flags);
  * POSIX.1-2017 article</a> for normative description.
  *
  * In addition, the function shall return -1 and set the following errno:
- * [NRF_ESHUTDOWN] Modem was shut down.
- * [NRF_ECANCELED] Operation canceled because of APN rate control.
+ * - [NRF_ESHUTDOWN] Modem was shut down.
+ * - [NRF_ECANCELED] Operation canceled because of APN rate control.
+ * - [NRF_ENOMEM] TCP stream interrupted because of no heap memory.
  */
 ssize_t nrf_sendto(int socket, const void *message, size_t length, int flags,
 		   const struct nrf_sockaddr *dest_addr, nrf_socklen_t dest_len);
@@ -622,7 +662,8 @@ ssize_t nrf_sendto(int socket, const void *message, size_t length, int flags,
  * POSIX.1-2017 article</a> for normative description.
  *
  * In addition, the function shall return -1 and set the following errno:
- * [NRF_ESHUTDOWN] Modem was shut down.
+ * - [NRF_ESHUTDOWN] Modem was shut down.
+ * - [NRF_ENOMEM] TCP stream interrupted because of no heap memory.
  */
 ssize_t nrf_recv(int socket, void *buffer, size_t length, int flags);
 
@@ -634,7 +675,8 @@ ssize_t nrf_recv(int socket, void *buffer, size_t length, int flags);
  * POSIX.1-2017 article</a> for normative description.
  *
  * In addition, the function shall return -1 and set the following errno:
- * [NRF_ESHUTDOWN] Modem was shut down.
+ * - [NRF_ESHUTDOWN] Modem was shut down.
+ * - [NRF_ENOMEM] TCP stream interrupted because of no heap memory.
  */
 ssize_t nrf_recvfrom(int socket, void *restrict buffer, size_t length, int flags,
 		     struct nrf_sockaddr *restrict address, nrf_socklen_t *restrict address_len);
@@ -669,6 +711,22 @@ struct nrf_pollfd {
 #define NRF_POLLHUP 0x10
 /** Invalid fd member (revents only) */
 #define NRF_POLLNVAL 0x20
+
+/** Callback for poll events */
+typedef void (*nrf_modem_pollcb_t)(struct nrf_pollfd *pollfd);
+
+/** @c nrf_poll() callback */
+struct nrf_modem_pollcb {
+	/** Callback function */
+	nrf_modem_pollcb_t callback;
+	/** Events mask */
+	short events;
+	/** Oneshot callback.
+	 *  If @c true, unset the callback after invoking it.
+	 */
+	bool oneshot;
+};
+
 /**@} */
 
 /**@addtogroup nrf_socket_api
@@ -698,7 +756,7 @@ int nrf_poll(struct nrf_pollfd fds[], nrf_nfds_t nfds, int timeout);
  *       of socket options described by POSIX, but also some additional options.
  *
  * In addition, the function shall return -1 and set the following errno:
- * [NRF_ESHUTDOWN] Modem was shut down.
+ * - [NRF_ESHUTDOWN] Modem was shut down.
  */
 int nrf_setsockopt(int socket, int level, int option_name,
 		   const void *option_value, nrf_socklen_t option_len);
@@ -724,7 +782,7 @@ int nrf_getsockopt(int socket, int level, int option_name,
  * POSIX.1-2017 article</a> for normative description.
  *
  * In addition, the function shall return -1 and set the following errno:
- * [NRF_ESHUTDOWN] Modem was shut down.
+ * - [NRF_ESHUTDOWN] Modem was shut down.
  */
 int nrf_bind(int socket, const struct nrf_sockaddr *address, nrf_socklen_t address_len);
 
@@ -736,7 +794,7 @@ int nrf_bind(int socket, const struct nrf_sockaddr *address, nrf_socklen_t addre
  * POSIX.1-2017 article</a> for normative description.
  *
  * In addition, the function shall return -1 and set the following errno:
- * [NRF_ESHUTDOWN] Modem was shut down.
+ * - [NRF_ESHUTDOWN] Modem was shut down.
  */
 int nrf_listen(int sock, int backlog);
 
@@ -748,7 +806,7 @@ int nrf_listen(int sock, int backlog);
  * POSIX.1-2017 article</a> for normative description.
  *
  * In addition, the function shall return -1 and set the following errno:
- * [NRF_ESHUTDOWN] Modem was shut down.
+ * - [NRF_ESHUTDOWN] Modem was shut down.
  */
 int nrf_accept(int socket, struct nrf_sockaddr *restrict address,
 	       nrf_socklen_t *restrict address_len);
@@ -789,7 +847,7 @@ const char *nrf_inet_ntop(int af, const void *restrict src, char *restrict dst, 
  * POSIX.1-2017 article</a> for normative description.
  *
  * In addition, the function shall return -1 and set the following errno:
- * [NRF_ESHUTDOWN] Modem was shut down.
+ * - [NRF_ESHUTDOWN] Modem was shut down.
  */
 int nrf_getaddrinfo(const char *restrict nodename,
 		    const char *restrict servname,
@@ -806,6 +864,33 @@ int nrf_getaddrinfo(const char *restrict nodename,
 void nrf_freeaddrinfo(struct nrf_addrinfo *ai);
 
 /**
+ * @brief Get interface address information.
+ *
+ * @details
+ * Create a linked list of nrf_ifaddrs structures describing the network interfaces
+ * and store the address of the first item of the list in @p *ifa.
+ *
+ * The data returned by this function is dynamically allocated and
+ * must be freed using @ref nrf_freeifaddrs() when no longer needed.
+ *
+ * @param[in, out] ifa First item in the linked list of interface addresses.
+ *
+ * @retval 0 on success.
+ * @retval -1 on error, and set @c errno to indicate the reason.
+ */
+int nrf_getifaddrs(struct nrf_ifaddrs **ifa);
+
+/**
+ * @brief Free address information returned by @ref nrf_getifaddrs().
+ *
+ * @details
+ * Free a linked list of nrf_ifaddrs structures.
+ *
+ * @param ifa First item in the linked list of interface addresses.
+ */
+void nrf_freeifaddrs(struct nrf_ifaddrs *ifa);
+
+/**
  * @brief Set a secondary DNS address.
  *
  * @details
@@ -816,20 +901,20 @@ void nrf_freeaddrinfo(struct nrf_addrinfo *ai);
  * @note
  * It is not possible to unset a secondary DNS address set using this function.
  *
- * @param[in] family    Address family.
- * @param[in] in_addr   An IPv4 or IPv6 address encoded in a nrf_in_addr or
- *                      nrf_in6_addr structure, respectively.
- * @param[in] in_size   Size of the structure pointed to by in_addr.
+ * @param family    Address family.
+ * @param in_addr   An IPv4 or IPv6 address encoded in a nrf_in_addr or
+ *                  nrf_in6_addr structure, respectively.
+ * @param in_size   Size of the structure pointed to by in_addr.
  *
  * @retval 0  On success
  * @retval -1 On error, and set @c errno to indicate the reason.
  *
  * The function shall return -1 and set the following errno:
- * [NRF_EPERM] The Modem library is not initialized.
- * [NRF_EAFNOSUPPORT] The implementation does not support the specified address family.
- * [NRF_EINVAL] Invalid parameters.
- * [NRF_ENOBUFS] Not enough shared memory for this request.
- * [NRF_ESHUTDOWN] Modem was shut down.
+ * - [NRF_EPERM] The Modem library is not initialized.
+ * - [NRF_EAFNOSUPPORT] The implementation does not support the specified address family.
+ * - [NRF_EINVAL] Invalid parameters.
+ * - [NRF_ENOBUFS] Not enough shared memory for this request.
+ * - [NRF_ESHUTDOWN] Modem was shut down.
  */
 int nrf_setdnsaddr(int family, const void *in_addr, nrf_socklen_t in_size);
 

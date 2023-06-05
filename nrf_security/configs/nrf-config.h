@@ -23,10 +23,12 @@ extern "C" {
 /****************************************************************/
 
 #if defined(PSA_WANT_ALG_DETERMINISTIC_ECDSA)
+#if defined(MBEDTLS_PSA_BUILTIN_ALG_DETERMINISTIC_ECDSA)
 #define MBEDTLS_ECDSA_DETERMINISTIC
 #define MBEDTLS_ECDSA_C
 #define MBEDTLS_HMAC_DRBG_C
 #define MBEDTLS_MD_C
+#endif
 #endif
 
 #if defined(PSA_WANT_ALG_ECDH)
@@ -96,7 +98,10 @@ extern "C" {
 #endif
 
 #if defined(PSA_WANT_ALG_SHA_1)
-#if defined(MBEDTLS_PSA_BUILTIN_ALG_SHA_1)
+/* TLS/DTLS 1.2 requires SHA-1 support using legacy API for now.
+ * Revert this when resolving NCSDK-20975.
+ */
+#if defined(MBEDTLS_PSA_BUILTIN_ALG_SHA_1) || defined(CONFIG_MBEDTLS_TLS_LIBRARY)
 #define MBEDTLS_SHA1_C
 #endif
 #endif
@@ -233,7 +238,7 @@ extern "C" {
 
 #if defined(PSA_WANT_ALG_CHACHA20_POLY1305)
 #if defined(PSA_WANT_KEY_TYPE_CHACHA20)
-#define MBEDTLS_CHACHA20_c
+#define MBEDTLS_CHACHA20_C
 #define MBEDTLS_POLY1305_C
 #define MBEDTLS_CHACHAPOLY_C
 #endif
@@ -368,6 +373,12 @@ extern "C" {
 #if defined(MBEDTLS_PSA_BUILTIN_ALG_CMAC) || \
     defined(MBEDTLS_PSA_BUILTIN_ALG_HMAC)
 #define MBEDTLS_PSA_BUILTIN_MAC
+#endif
+
+#if defined(CONFIG_MBEDTLS_DEBUG)
+#define MBEDTLS_ERROR_C
+#define MBEDTLS_DEBUG_C
+#define MBEDTLS_SSL_DEBUG_ALL
 #endif
 
 #ifdef __cplusplus

@@ -20,17 +20,20 @@
  */
 
 #include "common.h"
-#include "psa_crypto_aead.h"
-#include "psa_crypto_cipher.h"
 #include "psa_crypto_core.h"
 #include "psa_crypto_driver_wrappers.h"
-#include "psa_crypto_hash.h"
-#include "psa_crypto_mac.h"
 #include <string.h>
 
 #include "mbedtls/platform.h"
 
 #if defined(MBEDTLS_PSA_CRYPTO_C)
+
+#if defined(PSA_CRYPTO_DRIVER_BUILTIN)
+#include "psa_crypto_aead.h"
+#include "psa_crypto_cipher.h"
+#include "psa_crypto_hash.h"
+#include "psa_crypto_mac.h"
+#endif
 
 #if defined(MBEDTLS_PSA_CRYPTO_DRIVERS)
 
@@ -73,7 +76,9 @@
 /* Auto-generated values depending on which drivers are registered.
  * ID 0 is reserved for unallocated operations.
  * ID 1 is reserved for the Mbed TLS software driver. */
+#if defined(PSA_CRYPTO_DRIVER_BUILTIN)
 #define PSA_CRYPTO_MBED_TLS_DRIVER_ID (1)
+#endif /* PSA_CRYPTO_DRIVER_BUILTIN */
 
 #if defined(PSA_CRYPTO_DRIVER_CC3XX)
 #define PSA_CRYPTO_CC3XX_DRIVER_ID (4)
@@ -139,6 +144,9 @@ psa_status_t psa_driver_wrapper_sign_message(
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
@@ -236,6 +244,9 @@ psa_status_t psa_driver_wrapper_verify_message(
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
 
@@ -348,6 +359,9 @@ psa_status_t psa_driver_wrapper_sign_hash(
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
 
@@ -422,18 +436,6 @@ psa_status_t psa_driver_wrapper_sign_hash(
             return( PSA_ERROR_NOT_SUPPORTED );
         /* Add cases for opaque driver here */
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
-#if defined(PSA_CRYPTO_DRIVER_TEST)
-        case PSA_CRYPTO_TEST_DRIVER_LOCATION:
-            return( mbedtls_test_opaque_signature_sign_hash( attributes,
-                                                             key_buffer,
-                                                             key_buffer_size,
-                                                             alg,
-                                                             hash,
-                                                             hash_length,
-                                                             signature,
-                                                             signature_size,
-                                                             signature_length ) );
-#endif /* PSA_CRYPTO_DRIVER_TEST */
 #endif /* PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT */
         default:
             /* Key is declared with a lifetime not known to us */
@@ -475,6 +477,9 @@ psa_status_t psa_driver_wrapper_verify_hash(
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
@@ -605,6 +610,11 @@ psa_status_t psa_driver_wrapper_get_key_buffer_size(
     *key_buffer_size = 0;
     switch( location )
     {
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+            return tfm_builtin_key_loader_get_key_buffer_size(psa_get_key_id(attributes),
+                                                              key_buffer_size);
+#endif /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
         default:
             (void)key_type;
             (void)key_bits;
@@ -644,6 +654,9 @@ psa_status_t psa_driver_wrapper_generate_key(
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
             /* Transparent drivers are limited to generating asymmetric keys */
             if( PSA_KEY_TYPE_IS_ASYMMETRIC( attributes->core.type ) )
@@ -735,6 +748,9 @@ psa_status_t psa_driver_wrapper_import_key(
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
 
@@ -819,6 +835,9 @@ psa_status_t psa_driver_wrapper_export_key(
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             return( psa_export_key_internal( attributes,
                                              key_buffer,
                                              key_buffer_size,
@@ -864,6 +883,9 @@ psa_status_t psa_driver_wrapper_export_public_key(
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
@@ -904,17 +926,16 @@ psa_status_t psa_driver_wrapper_export_public_key(
                  return( status );
 #endif /* PSA_CRYPTO_DRIVER_HAS_ACCEL_KEY_TYPES_OBERON */
 #endif /* PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT */
-#if defined(MBEDTLS_PSA_BUILTIN_HAS_KEY_TYPE)
-            /* Fell through, meaning no accelerator supports this operation */
-            return( psa_export_public_key_internal( attributes,
-                                                    key_buffer,
-                                                    key_buffer_size,
-                                                    data,
-                                                    data_size,
-                                                    data_length ) );
-#else
-            return ( PSA_ERROR_NOT_SUPPORTED );
-#endif /* !MBEDTLS_PSA_BUILTIN_HAS_KEY_TYPE */
+        /* Fell through, meaning no accelerator supports this operation.
+         * The CryptoCell driver doesn't support export public keys when
+         * the key is a public key itself, so this is necessary.
+         */
+        return( psa_export_public_key_internal( attributes,
+                                                key_buffer,
+                                                key_buffer_size,
+                                                data,
+                                                data_size,
+                                                data_length ) );
         default:
             /* Key is declared with a lifetime not known to us */
             return( status );
@@ -930,6 +951,14 @@ psa_status_t psa_driver_wrapper_get_builtin_key(
     switch( location )
     {
         default:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+            return( tfm_builtin_key_loader_get_key_buffer(
+                        slot_number,
+                        attributes,
+                        key_buffer, key_buffer_size, key_buffer_length ) );
+#endif /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
+
             (void) slot_number;
             (void) key_buffer;
             (void) key_buffer_size;
@@ -995,6 +1024,9 @@ psa_status_t psa_driver_wrapper_cipher_encrypt(
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
@@ -1112,6 +1144,9 @@ psa_status_t psa_driver_wrapper_cipher_decrypt(
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
@@ -1200,6 +1235,9 @@ psa_status_t psa_driver_wrapper_cipher_encrypt_setup(
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
@@ -1283,6 +1321,9 @@ psa_status_t psa_driver_wrapper_cipher_decrypt_setup(
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
@@ -1814,6 +1855,9 @@ psa_status_t psa_driver_wrapper_aead_encrypt(
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
 
@@ -1903,6 +1947,9 @@ psa_status_t psa_driver_wrapper_aead_decrypt(
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
 
@@ -1980,6 +2027,30 @@ psa_status_t psa_driver_wrapper_aead_decrypt(
     }
 }
 
+psa_status_t psa_driver_get_tag_len( psa_aead_operation_t *operation,
+                                     uint8_t *tag_len )
+{
+    switch (operation->id) {
+#if defined(PSA_CRYPTO_DRIVER_HAS_AEAD_SUPPORT_CC3XX)
+    case PSA_CRYPTO_CC3XX_DRIVER_ID:
+        *tag_len = operation->ctx.cc3xx_driver_ctx_tag_length;
+        return PSA_SUCCESS;
+#endif
+#if defined(PSA_CRYPTO_DRIVER_HAS_AEAD_SUPPORT_OBERON)
+    case PSA_CRYPTO_OBERON_DRIVER_ID:
+        *tag_len = (size_t)operation->ctx.oberon_driver_ctx.tag_length;
+        return PSA_SUCCESS;
+#endif
+#if defined(MBEDTLS_PSA_BUILTIN_HAS_AEAD_SUPPORT)
+    case PSA_CRYPTO_MBED_TLS_DRIVER_ID:
+        *tag_len = operation->ctx.mbedtls_ctx.tag_length;
+        return ( PSA_SUCCESS );
+#endif
+    default:
+            return( PSA_ERROR_INVALID_ARGUMENT );
+    }
+}
+
 psa_status_t psa_driver_wrapper_aead_encrypt_setup(
    psa_aead_operation_t *operation,
    const psa_key_attributes_t *attributes,
@@ -1993,6 +2064,9 @@ psa_status_t psa_driver_wrapper_aead_encrypt_setup(
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
 
@@ -2010,6 +2084,7 @@ psa_status_t psa_driver_wrapper_aead_encrypt_setup(
 #endif /* PSA_CRYPTO_DRIVER_HAS_AEAD_SUPPORT_CRACEN*/
 #if defined(PSA_CRYPTO_DRIVER_HAS_AEAD_SUPPORT_CC3XX)
             operation->id = PSA_CRYPTO_CC3XX_DRIVER_ID;
+            operation->ctx.cc3xx_driver_ctx_tag_length = PSA_ALG_AEAD_GET_TAG_LENGTH(alg);
             status = cc3xx_aead_encrypt_setup(
                     &operation->ctx.cc3xx_driver_ctx,
                     attributes, key_buffer, key_buffer_size,
@@ -2071,6 +2146,9 @@ psa_status_t psa_driver_wrapper_aead_decrypt_setup(
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
 
@@ -2089,6 +2167,7 @@ psa_status_t psa_driver_wrapper_aead_decrypt_setup(
 #endif /* PSA_CRYPTO_DRIVER_HAS_AEAD_SUPPORT_CRACEN */
 #if defined(PSA_CRYPTO_DRIVER_HAS_AEAD_SUPPORT_CC3XX)
             operation->id = PSA_CRYPTO_CC3XX_DRIVER_ID;
+            operation->ctx.cc3xx_driver_ctx_tag_length = PSA_ALG_AEAD_GET_TAG_LENGTH(alg);
             status = cc3xx_aead_decrypt_setup(
                     &operation->ctx.cc3xx_driver_ctx,
                     attributes,
@@ -2516,6 +2595,9 @@ psa_status_t psa_driver_wrapper_mac_compute(
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
@@ -2583,6 +2665,9 @@ psa_status_t psa_driver_wrapper_mac_sign_setup(
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
@@ -2654,6 +2739,9 @@ psa_status_t psa_driver_wrapper_mac_verify_setup(
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
@@ -2838,9 +2926,9 @@ psa_status_t psa_driver_wrapper_mac_abort(
 psa_status_t psa_driver_wrapper_key_agreement(
         const psa_key_attributes_t *attributes,
         const uint8_t *priv_key, size_t priv_key_size,
+        psa_algorithm_t alg,
         const uint8_t *publ_key, size_t publ_key_size,
-        uint8_t *output, size_t output_size, size_t *output_length,
-        psa_algorithm_t alg )
+        uint8_t *output, size_t output_size, size_t *output_length )
 {
     psa_status_t status = PSA_ERROR_CORRUPTION_DETECTED;
 
@@ -2850,6 +2938,9 @@ psa_status_t psa_driver_wrapper_key_agreement(
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
@@ -2890,6 +2981,20 @@ psa_status_t psa_driver_wrapper_key_agreement(
             return( status );
 #endif /* PSA_CRYPTO_DRIVER_ALG_ECDH_CRACEN */
 #endif /* PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT */
+#if defined(MBEDTLS_PSA_BUILTIN_ALG_ECDH)
+            /* Software Fallback */
+            status = psa_key_agreement_raw_builtin( attributes,
+                                                    priv_key,
+                                                    priv_key_size,
+                                                    alg,
+                                                    publ_key,
+                                                    publ_key_size,
+                                                    output,
+                                                    output_size,
+                                                    output_length );
+
+            return( status );
+#endif /* MBEDTLS_PSA_BUILTIN_ALG_ECDH */
             (void) status;
             return ( PSA_ERROR_NOT_SUPPORTED );
     default:
@@ -2926,6 +3031,9 @@ psa_status_t psa_driver_wrapper_asymmetric_encrypt(const psa_key_attributes_t *a
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
@@ -2993,6 +3101,9 @@ psa_status_t psa_driver_wrapper_asymmetric_decrypt(const psa_key_attributes_t *a
     switch( location )
     {
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
+#if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
+        case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
+#endif /* defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER) */
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)

@@ -10,6 +10,7 @@ append_with_prefix(src_crypto_legacy ${ARM_MBEDTLS_PATH}/library
   dhm.c
   cipher.c
   cipher_wrap.c
+  hash_info.c
   md.c
   pk.c
   pk_wrap.c
@@ -43,6 +44,13 @@ if(CONFIG_MBEDTLS_LEGACY_CRYPTO_C OR
     hmac_drbg.c
     rsa.c
     rsa_alt_helpers.c
+  )
+endif()
+
+if(CONFIG_MBEDTLS_PSA_CRYPTO_SPM AND CONFIG_MBEDTLS_HKDF_C)
+  # TF-M 1.7.0 requires legacy mbedtls_hkdf function in key loader.
+  append_with_prefix(src_crypto_legacy ${ARM_MBEDTLS_PATH}/library
+    hkdf.c
   )
 endif()
 
