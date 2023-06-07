@@ -3,7 +3,7 @@
 SoftDevice Controller
 #####################
 
-The |controller| is an RTOS-agnostic library built for the Nordic Semiconductor nRF52, nRF53, and nRF54 Series.
+The |controller| is an RTOS-agnostic library built for the Nordic Semiconductor nRF52 and nRF53 Series.
 It supports Bluetooth 5.
 The library utilizes services provided by the :ref:`mpsl`.
 
@@ -60,8 +60,6 @@ Variants for the Arm Cortex-M33 processor are available as soft-float only.
 
    * For Connectionless CTE Advertising, angle of arrival (AoA) is supported, but angle of departure (AoD) is not.
    * For Connection CTE Response, angle of arrival (AoA) is supported, but angle of departure (AoD) is not.
-   * For the Periodic Advertising with Responses - Advertiser feature, the support is experimental.
-   * For the Periodic Advertising with Responses - Scanner feature, the support is experimental.
    * For the LE Power Control Request feature, the support is experimental.
    * For Periodic Advertising Sync Transfer - Receiver, only one sync transfer reception may be in progress at any one time per link.
 
@@ -89,7 +87,6 @@ Proprietary feature support:
 
    doc/softdevice_controller
    doc/scheduling
-   doc/bluetooth_coex_example_diagrams
    limitations
    CHANGELOG
    doc/api
