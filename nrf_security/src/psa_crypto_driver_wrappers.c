@@ -195,6 +195,19 @@ psa_status_t psa_driver_wrapper_sign_message(
 #endif /* PSA_CRYPTO_DRIVER_HAS_ASYM_SIGN_SUPPORT_OBERON */
 #endif /* PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT */
             break;
+#if defined(PSA_CRYPTO_DRIVER_HAS_ASYM_SIGN_SUPPORT_CRACEN)
+        case PSA_KEY_LOCATION_CRACEN:
+            return cracen_sign_message(
+                        attributes,
+                        key_buffer,
+                        key_buffer_size,
+                        alg,
+                        input,
+                        input_length,
+                        signature,
+                        signature_size,
+                        signature_length );
+#endif /* PSA_CRYPTO_ASYM_SIGN_SUPPORT_CRACEN */
         default:
             /* Key is declared with a lifetime not known to us */
             (void)status;
@@ -608,6 +621,11 @@ psa_status_t psa_driver_wrapper_get_key_buffer_size(
     *key_buffer_size = 0;
     switch( location )
     {
+#if defined(PSA_CRYPTO_DRIVER_HAS_ACCEL_KEY_TYPES_CRACEN)
+        case PSA_KEY_LOCATION_CRACEN:
+            *key_buffer_size = cracen_get_opaque_size(attributes);
+            return *key_buffer_size != 0 ? PSA_SUCCESS : PSA_ERROR_NOT_SUPPORTED;
+#endif
 #if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
         case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
             return tfm_builtin_key_loader_get_key_buffer_size(psa_get_key_id(attributes),
@@ -921,6 +939,16 @@ psa_status_t psa_driver_wrapper_export_public_key(
              if( status != PSA_ERROR_NOT_SUPPORTED )
                  return( status );
 #endif /* PSA_CRYPTO_DRIVER_HAS_ACCEL_KEY_TYPES_OBERON */
+#if defined(PSA_CRYPTO_DRIVER_HAS_ACCEL_KEY_TYPES_CRACEN)
+        case PSA_KEY_LOCATION_CRACEN:
+            return cracen_export_public_key(
+                         attributes,
+                         key_buffer,
+                         key_buffer_size,
+                         data,
+                         data_size,
+                         data_length );
+#endif /* PSA_CRYPTO_DRIVER_HAS_ACCEL_KEY_TYPES_CRACEN*/
 #endif /* PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT */
         /* Fell through, meaning no accelerator supports this operation.
          * The CryptoCell driver doesn't support export public keys when
@@ -946,7 +974,14 @@ psa_status_t psa_driver_wrapper_get_builtin_key(
     psa_key_location_t location = PSA_KEY_LIFETIME_GET_LOCATION( attributes->core.lifetime );
     switch( location )
     {
-        default:
+#if defined(PSA_CRYPTO_DRIVER_HAS_ACCEL_KEY_TYPES_CRACEN)
+        case PSA_KEY_LOCATION_CRACEN:
+            return ( cracen_get_builtin_key( slot_number,
+                                             attributes,
+                                             key_buffer,
+                                             key_buffer_size,
+                                             key_buffer_length ) );
+#endif /* PSA_CRYPTO_DRIVER_HAS_ACCEL_KEY_TYPES_CRACEN*/
 #if defined(PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER)
         case TFM_BUILTIN_KEY_LOADER_KEY_LOCATION:
             return( tfm_builtin_key_loader_get_key_buffer(
@@ -954,7 +989,7 @@ psa_status_t psa_driver_wrapper_get_builtin_key(
                         attributes,
                         key_buffer, key_buffer_size, key_buffer_length ) );
 #endif /* PSA_CRYPTO_DRIVER_TFM_BUILTIN_KEY_LOADER */
-
+        default:
             (void) slot_number;
             (void) key_buffer;
             (void) key_buffer_size;

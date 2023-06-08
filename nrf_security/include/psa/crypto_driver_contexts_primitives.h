@@ -46,7 +46,7 @@
 #include "oberon.h"
 #endif
 #if defined(PSA_CRYPTO_DRIVER_CRACEN)
-#include "cracen_psa.h"
+#include "cracen_psa_primitives.h"
 #endif
 
 /* Include the context structure definitions for the Mbed TLS software drivers */
