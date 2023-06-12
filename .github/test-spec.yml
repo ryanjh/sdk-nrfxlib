@@ -134,3 +134,8 @@
 
 "CI-test_sdk_sysctrl":
   - "**/*"
+
+"CI-test_secdomfw_build":
+  - "crypto/**/*"
+  - "nrf_rpc/**/*"
+  - "nrf_security/**/*"
