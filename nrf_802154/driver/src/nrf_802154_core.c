@@ -1678,19 +1678,15 @@ uint8_t nrf_802154_trx_receive_frame_bcmatched(uint8_t bcc)
             nrf_802154_rsch_crit_sect_prio_request(RSCH_PRIO_RX);
             nrf_802154_ack_generator_reset();
         }
-    }
 
-    if (nrf_802154_pib_promiscuous_get())
-    {
-        /*
-         * In promiscuous mode all filtering should be ignored unless the frame has
-         * length 0 or above maximum frame length.
-         */
-        uint8_t psdu_length = nrf_802154_frame_parser_frame_length_get(&m_current_rx_frame_data);
-
-        if (psdu_length > 0 && psdu_length <= MAX_PACKET_SIZE)
+        if (nrf_802154_pib_promiscuous_get())
         {
-            filter_result = NRF_802154_RX_ERROR_NONE;
+            /*
+             * In promiscuous mode all filtering should be ignored unless the frame has
+             * invalid length.
+             */
+            filter_result = filter_result == NRF_802154_RX_ERROR_INVALID_LENGTH ?
+                            filter_result : NRF_802154_RX_ERROR_NONE;
         }
     }
 
@@ -2439,7 +2435,29 @@ bool nrf_802154_core_receive(nrf_802154_term_t              term_lvl,
         {
             if (critical_section_can_be_processed_now())
             {
-                result = core_receive(term_lvl, req_orig, notify_abort, id);
+                result = current_operation_terminate(term_lvl, req_orig, notify_abort);
+
+                if (result)
+                {
+                    m_trx_receive_frame_notifications_mask =
+                        make_trx_frame_receive_notification_mask();
+
+                    m_rx_window_id = id;
+                    state_set(RADIO_STATE_RX);
+
+                    bool abort_shall_follow = false;
+
+                    rx_init(ramp_up_mode_choose(req_orig), &abort_shall_follow);
+
+                    if (abort_shall_follow)
+                    {
+                        nrf_802154_trx_abort();
+
+                        // HW triggering failed, fallback is SW trigger.
+                        // (fallback immunizes against the rare case of spurious lptimer firing)
+                        rx_init(TRX_RAMP_UP_SW_TRIGGER, NULL);
+                    }
+                }
             }
             else
             {
