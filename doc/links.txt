@@ -7,7 +7,7 @@
 
 .. _`nrfx`: https://github.com/NordicSemiconductor/nrfx/
 
-.. _`Arm Mbed TLS project`: https://github.com/ARMmbed/mbedtlsgit
+.. _`Arm Mbed TLS project`: https://github.com/ARMmbed/mbedtls
 
 .. _`TinyCBOR`: https://github.com/zephyrproject-rtos/tinycbor
 
@@ -42,7 +42,9 @@
 
 .. _`%XMODEMTRACE AT command documentation`: https://infocenter.nordicsemi.com/topic/ref_at_commands/REF/at_commands/mob_termination_ctrl_status/xmodemtrace.html
 
-.. _`coex interface of nRF9160`: https://infocenter.nordicsemi.com/index.jsp?topic=%2Fps_nrf9160%2Fip%2Fradio_lte%2Fdoc%2Fmagpio_if.html
+.. _`nRF Trace collector`: https://infocenter.nordicsemi.com/index.jsp?topic=%2Fug_trace_collector%2FUG%2Ftrace_collector%2Fintro.html
+
+.. _`coex interface of nRF9160`:  https://infocenter.nordicsemi.com/index.jsp?topic=%2Fps_nrf9160%2Fip%2Fradio_lte%2Fdoc%2Fmagpio_if.html
 
 .. ### Source: www.nordicsemi.com
 
@@ -79,6 +81,6 @@
 
 .. _`NMEA report sample`: http://aprs.gids.nl/nmea/#gsa
 
-.. _`Bluetooth Core Specification`: https://www.bluetooth.com/specifications/specs/core-specification/
+.. _`Bluetooth Core Specification`: https://www.bluetooth.com/specifications/specs/core-specification-5-4/
 
 .. _`Appropriate Language Mapping Table`: https://www.bluetooth.com/language-mapping/Appropriate-Language-Mapping-Table

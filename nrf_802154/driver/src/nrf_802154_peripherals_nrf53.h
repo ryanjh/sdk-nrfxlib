@@ -251,7 +251,7 @@ extern "C" {
 #endif  // NRF_802154_TEST_MODES_ENABLED
 
 /**
- * @def NRF_802154_DPPI_RADIO_HW_TRIGGER
+ * @def NRF_802154_DPPI_RADIO_CCABUSY
  *
  * The DPPI channel that triggers radio
  */

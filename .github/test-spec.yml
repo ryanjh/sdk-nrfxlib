@@ -129,13 +129,8 @@
 "CI-positioning-test":
   - "nrf_modem/**/*"
 
-"CI-test_sdk_hcs":
-  - "**/*"
-
-"CI-test_sdk_sysctrl":
-  - "**/*"
-
-"CI-test_secdomfw_build":
+"CI-cloud-test":
+  - "nrf_modem/**/*"
+  - "nrf_security/**/*"
   - "crypto/**/*"
   - "nrf_rpc/**/*"
-  - "nrf_security/**/*"
