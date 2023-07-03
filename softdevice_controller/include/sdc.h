@@ -118,8 +118,8 @@ extern "C" {
  */
 
 /** @brief Auxiliary defines, not to be used outside of this file. */
-#define __MEM_MINIMAL_CENTRAL_LINK_SIZE 1136
-#define __MEM_MINIMAL_PERIPHERAL_LINK_SIZE 1285
+#define __MEM_MINIMAL_CENTRAL_LINK_SIZE 1101
+#define __MEM_MINIMAL_PERIPHERAL_LINK_SIZE 1248
 #define __MEM_TX_BUFFER_OVERHEAD_SIZE 16
 #define __MEM_RX_BUFFER_OVERHEAD_SIZE 14
 
@@ -169,7 +169,7 @@ extern "C" {
 /** @brief Auxiliary defines, not to be used outside of this file. */
 #define __MEM_PER_ADV_SET_LOW(max_adv_data) ((4829+(max_adv_data)*18)/10)
 #define __MEM_PER_ADV_SET_HIGH(max_adv_data) (670+(max_adv_data))
-#define __MEM_PER_PERIODIC_ADV_SET_LOW(max_adv_data) ((2658+(max_adv_data)*18)/10)
+#define __MEM_PER_PERIODIC_ADV_SET_LOW(max_adv_data) ((2664+(max_adv_data)*18)/10)
 #define __MEM_PER_PERIODIC_ADV_SET_HIGH(max_adv_data) (457+(max_adv_data))
 
 /** @brief Maximum required memory for a given advertising buffer size.
@@ -214,7 +214,7 @@ extern "C" {
 #define __MEM_PER_PERIODIC_ADV_RSP_TX_BUFFER(max_tx_data_size) ((max_tx_data_size) + 5)
 #define __MEM_PER_PERIODIC_ADV_RSP_RX_BUFFER (282)
 #define __MEM_MINIMAL_PERIODIC_ADV_RSP_SET_SIZE_WITH_RX (465)
-#define __MEM_MINIMAL_PERIODIC_ADV_RSP_SET_SIZE_WITHOUT_RX (160)
+#define __MEM_MINIMAL_PERIODIC_ADV_RSP_SET_SIZE_WITHOUT_RX (166)
 #define __MEM_FOR_PERIODIC_ADV_RSP_FAILURE_REPORTING (224)
 
 /** Memory required per periodic advertising with responses set.
@@ -232,6 +232,9 @@ extern "C" {
      + (tx_buffer_count) * __MEM_PER_PERIODIC_ADV_RSP_TX_BUFFER(max_tx_data_size) \
      + (rx_buffer_count) * __MEM_PER_PERIODIC_ADV_RSP_RX_BUFFER \
      + ((failure_reporting_enabled) ? __MEM_FOR_PERIODIC_ADV_RSP_FAILURE_REPORTING : 0))
+
+/** Memory required for Quality of Service (QoS) channel survey module. */
+#define SDC_MEM_QOS_CHANNEL_SURVEY (40)
 
 /** @} end of sdc_mem_defines */
 
@@ -946,6 +949,16 @@ int32_t sdc_support_periodic_adv_sync_transfer_receiver_central(void);
  * @retval -NRF_EOPNOTSUPP Receiving periodic advertising sync transfers is not supported.
  */
 int32_t sdc_support_periodic_adv_sync_transfer_receiver_peripheral(void);
+
+/** @brief Support for Quality of Service (QoS) channel survey module
+ *
+ * After this API is called, the controller will support the @ref sdc_hci_cmd_vs_qos_channel_survey_enable HCI command
+ *
+ * @retval 0               Success
+ * @retval -NRF_EPERM      This API must be called before @ref sdc_cfg_set() or @ref sdc_enable().
+ * @retval -NRF_EOPNOTSUPP QoS channel survey is not supported.
+ */
+int32_t sdc_support_qos_channel_survey(void);
 
 /** @brief Configure the coex advertising mode
  *

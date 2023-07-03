@@ -17,6 +17,35 @@ All the notable changes included in the main branch are documented in this secti
 Added
 =====
 
+* Experimental support for the Quality of Service (QoS) channel survey.
+  See the :c:func:`sdc_hci_cmd_vs_qos_channel_survey_enable` function.
+
+Changes
+=======
+
+* Host now always receives LE Transmit Power Reporting Events.
+  Previously, some events might not be received when remote and local power changes were applied to the same PHY simultaneously. (DRGN-18950)
+* :c:func:`sdc_hci_cmd_put` and :c:func:`sdc_hci_cmd_vs_read_supported_vs_commands` functions are removed.
+  This change does not affect applications developed in the |NCS| context. (DRGN-19281)
+* When creating a connection or periodic advertiser, the controller will now attempt to select the interval so that it causes as few scheduling conflicts with existing periodic activities as possible.
+  The selected interval is always in the range ``[interval_min, interval_max]``, where ``interval_min`` and ``interval_max`` are provided by the host.
+  Previously, the controller always selected ``interval_max``.
+
+Bug fixes
+=========
+
+* Fixed a rare issue where the advertiser was not seen by peers.
+  This could happen if the device was running an advertiser and a periodic activity like a scanner/initiator, a periodic advertiser, a connection etc.
+  This issue would not occur if scan window was configured to be equal to scan interval (DRGN-19039).
+
+nRF Connect SDK v2.4.0
+**********************
+
+All the notable changes included in the |NCS| v2.4.0 release are documented in this section.
+
+Added
+=====
+
 * Support for the vendor-specific HCI command: Set Compatibility mode for window offset (DRGN-18727).
 * Support for Periodic Advertising with Responses (PAwR) Scanner (DRGN-18739).
 * Support for LE Read and Write RF Path Compensation HCI commands (DRGN-10234 and DRGN-18202).
@@ -30,8 +59,8 @@ Changes
 
 * The ``VersNr`` field in the ``LL_VERSION_IND`` packet now contains the value 0x0D to indicate compatibility with Bluetooth Core Specification v5.4 (DRGN-18624).
 * Receiving a Periodic Advertisement Sync Transfer (PAST) with invalid parameters will now generate the ``LE Periodic Advertising Sync Transfer Received`` event when receiving PAST is enabled (DRGN-18803).
-* Periodic advertiser is allocated from the Periodic Advertising with Responses (PAwR) Advertiser sets when :c:enumerator:`SDC_CFG_TYPE_PERIODIC_ADV_RSP_COUNT` is available.
-  Otherwise, it is allocated from the Periodic Advertiser sets if :c:enumerator:`SDC_CFG_TYPE_PERIODIC_ADV_COUNT` is set (DRGN-18979).
+* Periodic advertiser is allocated from the Periodic Advertising with Responses (PAwR) Advertiser sets when :c:enum:`SDC_CFG_TYPE_PERIODIC_ADV_RSP_COUNT` is available.
+  Otherwise, it is allocated from the Periodic Advertiser sets if :c:enum:`SDC_CFG_TYPE_PERIODIC_ADV_COUNT` is set (DRGN-18979).
 * The controller now returns the error code ``0x0D`` instead of ``0x09`` if it has insufficient resources to handle more connections and the host tries to start a connectable advertiser or the controller receives the commands ``LE Extended Create Connection`` or ``LE Create Connection`` (DRGN-18944).
 * Periodic Advertising with Responses (PAwR) Advertiser is supported (DRGN-18497).
 
