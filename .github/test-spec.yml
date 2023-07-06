@@ -136,10 +136,7 @@
   - "nrf_rpc/**/*"
 
 "CI-test_sdk_hcs":
-  - "**/*"
-
-"CI-test_sdk_sysctrl":
-  - "**/*"
+  - "nrf_rpc/**/*"
 
 "CI-test_secdomfw_build":
   - "crypto/**/*"
