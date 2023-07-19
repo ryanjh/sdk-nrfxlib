@@ -6,6 +6,8 @@
 
 if (CONFIG_MPSL_BUILD_TYPE_LIB)
 
+add_subdirectory(fem)
+
 if (CONFIG_SOC_PLATFORM_HALTIUM OR CONFIG_SOC_PLATFORM_NRF54L)
   nrfxlib_calculate_lib_path(MPSL_LIB_DIR SOC_MODE
     BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}
@@ -25,7 +27,5 @@ endif()
 zephyr_include_directories(include)
 zephyr_include_directories(include/protocol)
 zephyr_link_libraries(${MPSL_LIB_DIR}/libmpsl.a)
-
-add_subdirectory(fem)
 
 endif()
