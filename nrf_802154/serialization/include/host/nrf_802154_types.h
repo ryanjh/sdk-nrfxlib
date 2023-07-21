@@ -37,6 +37,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <nrf_802154_config.h>
 
 /**
  * @defgroup nrf_802154_types Type definitions used in the 802.15.4 driver
@@ -272,10 +273,11 @@ typedef struct
  */
 typedef struct
 {
-    nrf_802154_transmitted_frame_props_t frame_props; // !< Properties of the frame to be transmitted.
-    bool                                 cca;         // !< If the driver is to perform a CCA procedure before transmission.
-    uint8_t                              channel;     // !< Radio channel on which the frame is to be transmitted.
-    nrf_802154_tx_power_metadata_t       tx_power;    // !< Information about the TX power to be used
+    nrf_802154_transmitted_frame_props_t frame_props;        // !< Properties of the frame to be transmitted.
+    bool                                 cca;                // !< If the driver is to perform a CCA procedure before transmission.
+    uint8_t                              channel;            // !< Radio channel on which the frame is to be transmitted.
+    nrf_802154_tx_power_metadata_t       tx_power;           // !< Information about the TX power to be used
+    uint8_t                              extra_cca_attempts; // !< Maximum number of additional CCA attempts that can be performed if the first attempt returns busy channel. Ignored if @ref cca equals @c false.
 } nrf_802154_transmit_at_metadata_t;
 
 /**
@@ -363,6 +365,17 @@ typedef struct
     uint32_t              frame_counter;            // !< Frame counter to use in case @ref use_global_frame_counter is set to false.
     bool                  use_global_frame_counter; // !< Whether to use the global frame counter instead of the one defined in this structure.
 } nrf_802154_key_t;
+
+#if (NRF_802154_ENERGY_DETECTED_VERSION != 0)
+/**
+ * @brief Structure that holds results of energy detection procedure.
+ */
+typedef struct
+{
+    int8_t ed_dbm; // !< Maximum detected ED in dBm.
+} nrf_802154_energy_detected_t;
+
+#endif
 
 /**
  *@}

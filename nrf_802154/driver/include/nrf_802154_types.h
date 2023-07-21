@@ -36,6 +36,7 @@
 #define NRF_802154_TYPES_H__
 
 #include <stdint.h>
+#include <nrf_802154_config.h>
 
 /**
  * Avoid including nrfx dependencies in a unit test build.
@@ -427,10 +428,11 @@ typedef struct
  */
 typedef struct
 {
-    nrf_802154_transmitted_frame_props_t frame_props; // !< Properties of the frame to be transmitted.
-    bool                                 cca;         // !< If the driver is to perform a CCA procedure before transmission.
-    uint8_t                              channel;     // !< Radio channel on which the frame is to be transmitted.
-    nrf_802154_tx_power_metadata_t       tx_power;    // !< Information about the TX power to be used
+    nrf_802154_transmitted_frame_props_t frame_props;        // !< Properties of the frame to be transmitted.
+    bool                                 cca;                // !< If the driver is to perform a CCA procedure before transmission.
+    uint8_t                              channel;            // !< Radio channel on which the frame is to be transmitted.
+    nrf_802154_tx_power_metadata_t       tx_power;           // !< Information about the TX power to be used
+    uint8_t                              extra_cca_attempts; // !< Maximum number of additional CCA attempts that can be performed if the first attempt returns busy channel. Ignored if @ref cca equals @c false.
 } nrf_802154_transmit_at_metadata_t;
 
 /**
@@ -473,6 +475,17 @@ typedef void (* nrf_802154_transmit_failed_notification_t)(
     uint8_t                                   * p_frame,
     nrf_802154_tx_error_t                       error,
     const nrf_802154_transmit_done_metadata_t * p_meta);
+
+#if (NRF_802154_ENERGY_DETECTED_VERSION != 0)
+/**
+ * @brief Structure that holds results of energy detection procedure.
+ */
+typedef struct
+{
+    int8_t ed_dbm; // !< Maximum detected ED in dBm.
+} nrf_802154_energy_detected_t;
+
+#endif
 
 /**
  *@}

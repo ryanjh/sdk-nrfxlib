@@ -132,6 +132,11 @@ static inline bool are_frame_properties_valid(const nrf_802154_transmitted_frame
     return p_props->dynamic_data_is_set || !(p_props->is_secured);
 }
 
+static inline bool are_extra_cca_attempts_valid(const nrf_802154_transmit_at_metadata_t * p_data)
+{
+    return !p_data->cca || (p_data->extra_cca_attempts < UINT8_MAX);
+}
+
 void nrf_802154_channel_set(uint8_t channel)
 {
     bool changed = nrf_802154_pib_channel_get() != channel;
@@ -201,10 +206,20 @@ void nrf_802154_short_address_set(const uint8_t * p_short_address)
     nrf_802154_pib_short_address_set(p_short_address);
 }
 
+#if (NRF_802154_ENERGY_DETECTED_VERSION != 0)
+uint8_t nrf_802154_energy_level_from_dbm_calculate(int8_t ed_dbm)
+{
+    return nrf_802154_addons_energy_level_from_dbm_calculate(ed_dbm);
+}
+
+#else
+
 int8_t nrf_802154_dbm_from_energy_level_calculate(uint8_t energy_level)
 {
     return nrf_802154_addons_dbm_from_energy_level_calculate(energy_level);
 }
+
+#endif // NRF_802154_ENERGY_DETECTED_VERSION != 0
 
 uint8_t nrf_802154_ccaedthres_from_dbm_calculate(int8_t dbm)
 {
@@ -591,9 +606,10 @@ bool nrf_802154_transmit_raw_at(uint8_t                                 * p_data
     bool                              result;
     nrf_802154_transmit_at_metadata_t metadata_default =
     {
-        .frame_props = NRF_802154_TRANSMITTED_FRAME_PROPS_DEFAULT_INIT,
-        .cca         = true,
-        .tx_power    = {.use_metadata_value = false}
+        .frame_props        = NRF_802154_TRANSMITTED_FRAME_PROPS_DEFAULT_INIT,
+        .cca                = true,
+        .tx_power           = {.use_metadata_value = false},
+        .extra_cca_attempts = 0,
     };
 
     nrf_802154_log_function_enter(NRF_802154_LOG_VERBOSITY_LOW);
@@ -604,7 +620,8 @@ bool nrf_802154_transmit_raw_at(uint8_t                                 * p_data
         p_metadata               = &metadata_default;
     }
 
-    result = are_frame_properties_valid(&p_metadata->frame_props);
+    result = are_frame_properties_valid(&p_metadata->frame_props) &&
+             are_extra_cca_attempts_valid(p_metadata);
     if (result)
     {
         result = nrf_802154_request_transmit_raw_at(p_data, tx_time, p_metadata);
@@ -1217,10 +1234,19 @@ __WEAK void nrf_802154_transmit_failed(uint8_t                                  
     (void)p_metadata;
 }
 
+#if (NRF_802154_ENERGY_DETECTED_VERSION != 0)
+__WEAK void nrf_802154_energy_detected(const nrf_802154_energy_detected_t * p_result)
+{
+    (void)p_result;
+}
+
+#else
 __WEAK void nrf_802154_energy_detected(uint8_t result)
 {
     (void)result;
 }
+
+#endif
 
 __WEAK void nrf_802154_energy_detection_failed(nrf_802154_ed_error_t error)
 {

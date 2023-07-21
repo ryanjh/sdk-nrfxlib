@@ -631,7 +631,36 @@ uint8_t nrf_802154_csma_ca_max_backoffs_get(void);
  * or the requested transmission timeslot is denied, @ref nrf_802154_transmit_failed with the
  * @ref NRF_802154_TX_ERROR_TIMESLOT_DENIED argument is called.
  *
- * This function is designed to transmit the first symbol of SHR at the given time.
+ * Additional CCA attempts can be requested by the caller through @p p_metadata. In that case CCA
+ * procedure is repeated back-to-back either until it returns idle channel and the transmission
+ * starts, or until 1 + @p p_metadata->extra_cca_attempts CCA attempts are performed. The maximum
+ * allowed number of additional CCA attempts is 254 so that the total number of CCA attempts doesn't
+ * exceed 255.
+ *
+ * This function is designed to transmit the first symbol of SHR at @p tx_time provided that
+ * the number of CCA attempts that will be performed is deterministic, which is only the case when
+ * no attempts are performed or when a single attempt is performed. Otherwise, the function assumes
+ * that @p tx_time points to a moment where the transmission would start if the first CCA attempt
+ * detected idle channel. If the first CCA detects busy channel and additional CCA attempts follow,
+ * the moment of transmission (first symbol of SHR) is delayed by the time taken by additional CCA
+ * attempts, which is a multiple of the duration of a single CCA attempt.
+ *
+ * The below diagram shows an example sequence where two additional CCA attempts are performed.
+ * TT denotes turnaround time necessary to switch from CCA to Tx. @p tx_time points to a moment in
+ * time that occurs TT after the first CCA finishes.
+ *
+ * @verbatim
+ *           tx_time           frame start
+ *              |                   |
+ *              |                   |
+ *              v                   v
+ * +---------+---------+---------+--+----------+-----+-------------------------+
+ * |   CCA   |   CCA   |   CCA   |TT|    SHR   | PHR | MAC Header and payload  |
+ * +---------+---------+---------+--+----------+-----+-------------------------+
+ *           |         |         |
+ *           v         v         v
+ *          BUSY      BUSY      IDLE
+ * @endverbatim
  *
  * If the requested transmission time is in the past, the function returns @c false and does not
  * schedule transmission.
@@ -646,11 +675,13 @@ uint8_t nrf_802154_csma_ca_max_backoffs_get(void);
  * @param[in]  tx_time     Absolute time used by the SL Timer, in microseconds (us).
  * @param[in]  p_metadata  Pointer to metadata structure. Contains detailed properties of data
  *                         to transmit. If @c NULL following metadata are used:
- *                         Field           | Value
- *                         ----------------|-----------------------------------------------------
- *                         @c frame_props  | @ref NRF_802154_TRANSMITTED_FRAME_PROPS_DEFAULT_INIT
- *                         @c cca          | @c true
- *                         @c channel      | As returned by @ref nrf_802154_channel_get
+ *                         Field                 | Value
+ *                         ----------------------|-----------------------------------------------------
+ *                         @c frame_props        | @ref NRF_802154_TRANSMITTED_FRAME_PROPS_DEFAULT_INIT
+ *                         @c cca                | @c true
+ *                         @c channel            | As returned by @ref nrf_802154_channel_get
+ *                         @c tx_power           | As set with @ref nrf_802154_tx_power_set
+ *                         @c extra_cca_attempts | @c 0
  *
  * @retval  true   The transmission procedure was scheduled.
  * @retval  false  The driver could not schedule the transmission procedure.
@@ -703,6 +734,18 @@ void nrf_802154_tx_power_set(int8_t power);
  */
 int8_t nrf_802154_tx_power_get(void);
 
+#if (NRF_802154_ENERGY_DETECTED_VERSION != 0)
+/**
+ * @brief  Converts energy level received during the energy detection procedure to IEEE Std. 802.15.4-2015 compliant value.
+ *
+ * @param ed_dbm  Energy level in dBm
+ *
+ * @return uint8_t  Energy level in units compliant to IEEE Std. 802.15.4-2015 chapter 10.2.5.
+ */
+uint8_t nrf_802154_energy_level_from_dbm_calculate(int8_t ed_dbm);
+
+#else
+
 /**
  * @brief  Converts the energy level received during the energy detection procedure to a dBm value.
  *
@@ -711,6 +754,8 @@ int8_t nrf_802154_tx_power_get(void);
  * @return  Result of the energy detection procedure in dBm.
  */
 int8_t nrf_802154_dbm_from_energy_level_calculate(uint8_t energy_level);
+
+#endif // NRF_802154_ENERGY_DETECTED_VERSION != 0
 
 /**
  * @brief  Calculates the timestamp of the first symbol of the preamble in a received frame.

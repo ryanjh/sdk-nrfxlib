@@ -243,6 +243,15 @@ extern "C" {
 #endif
 
 /**
+ * @def NRF_802154_DPPI_RADIO_CCABUSY
+ *
+ * The DPPI channel that RADIO.CCABUSY event publishes to
+ */
+#ifndef NRF_802154_DPPI_RADIO_CCABUSY
+#define NRF_802154_DPPI_RADIO_CCABUSY 14U
+#endif
+
+/**
  * @def NRF_802154_DPPI_RADIO_HW_TRIGGER
  *
  * The DPPI channel that triggers radio.
@@ -280,6 +289,7 @@ extern "C" {
         (1UL << NRF_802154_DPPI_TIMER_COMPARE_TO_RADIO_TXEN) | \
         (1UL << NRF_802154_DPPI_RADIO_SYNC_TO_EGU_SYNC) |      \
         (1UL << NRF_802154_DPPI_RADIO_CCAIDLE) |               \
+        (1UL << NRF_802154_DPPI_RADIO_CCABUSY) |               \
         (1UL << NRF_802154_DPPI_RADIO_HW_TRIGGER) |            \
         NRF_802154_DPPI_TIMESTAMPS_USED_MASK)
 #endif // NRF_802154_DPPI_CHANNELS_USED_MASK

@@ -1525,8 +1525,9 @@ bool nrf_802154_transmit_raw_at(uint8_t                                 * p_data
             .frame_props = NRF_802154_TRANSMITTED_FRAME_PROPS_DEFAULT_INIT,
             .cca         = true,
             // channel set to 0 will be replaced on net core by the current channel from PIB
-            .channel  = 0,
-            .tx_power = {.use_metadata_value = false}
+            .channel            = 0,
+            .tx_power           = {.use_metadata_value = false},
+            .extra_cca_attempts = 0U,
         };
 
         p_metadata = &metadata_default;
@@ -1809,10 +1810,19 @@ bail:
     SERIALIZATION_ERROR_RAISE_IF_FAILED(error);
 }
 
+#if (NRF_802154_ENERGY_DETECTED_VERSION != 0)
+uint8_t nrf_802154_energy_level_from_dbm_calculate(int8_t ed_dbm)
+{
+    return nrf_802154_addons_energy_level_from_dbm_calculate(ed_dbm);
+}
+
+#else
 int8_t nrf_802154_dbm_from_energy_level_calculate(uint8_t energy_level)
 {
     return nrf_802154_addons_dbm_from_energy_level_calculate(energy_level);
 }
+
+#endif // NRF_802154_ENERGY_DETECTED_VERSION != 0
 
 uint64_t nrf_802154_first_symbol_timestamp_get(uint64_t end_timestamp, uint8_t psdu_length)
 {
