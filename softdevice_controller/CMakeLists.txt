@@ -47,4 +47,5 @@ if(CONFIG_BT_LL_SOFTDEVICE AND CONFIG_BT_LL_SOFTDEVICE_BUILD_TYPE_LIB)
   set(SOFTDEVICE_CONTROLLER_LIB
     ${SOFTDEVICE_CONTROLLER_LIB_DIR}/libsoftdevice_controller_${softdevice_controller_variant}.a)
   zephyr_link_libraries(${SOFTDEVICE_CONTROLLER_LIB})
+  zephyr_code_relocate(FILES ${SOFTDEVICE_CONTROLLER_LIB} LOCATION GRAM)
 endif()
